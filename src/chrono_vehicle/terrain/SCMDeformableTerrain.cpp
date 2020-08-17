@@ -10,13 +10,13 @@ namespace vehicle {
 // Utility Classes for SCDeformableGridTerrain
 // ====================================================================
 // ==========================ChGridElement.cpp=========================
-//=====================================================================
+// ====================================================================
 ChGridElement::ChGridElement(const ChGridElement& source) {
-    p1 = source.p1;
-    p2 = source.p2;
-    p3 = source.p3;
-    p4 = source.p4;
-    n = source.n;
+    p1 = source.p1; // the first vertex of a rectangular element
+    p2 = source.p2; // the second vertex of a rectangular element
+    p3 = source.p3; // the third vertex of a rectangular element
+    p4 = source.p4; // the fourth vertex of a rectangular element
+    n = source.n;   // the normal of a rectangular element
 }
 
 ChGridElement& ChGridElement::operator=(const ChGridElement& source) {
@@ -29,6 +29,8 @@ ChGridElement& ChGridElement::operator=(const ChGridElement& source) {
     n = source.n;
     return *this;
 }
+
+// Return the bounding box of one specific rectangular element
 void ChGridElement::GetBoundingBox(double& xmin,
                                 double& xmax,
                                 double& ymin,
@@ -57,6 +59,7 @@ void ChGridElement::GetBoundingBox(double& xmin,
     }
 }
 
+// return the center of the grid element
 ChVector<> ChGridElement::Baricenter(){
     ChVector<> mb;
     mb.x() = (p1.x() + p2.x() + p3.x() + p4.x()) / 4.;
@@ -67,22 +70,26 @@ ChVector<> ChGridElement::Baricenter(){
 
 // =============================================================================
 // ==========================ChSubGridMeshConnected.cpp=========================
-//==============================================================================
+// =============================================================================
 
+// helper function check repeat, check whether a ChVector<doouble> is already in the array
 bool checkRepeat(ChVector<double> a, std::vector<ChVector<double>> arr);
 
+// add a new rectangular element in the sub mesh
 void ChSubGridMeshConnected::addGridElement(ChGridElement temp){
     eleArr.push_back(temp);
     ChVector<double> buffer = temp.Baricenter();
     eleCenter.push_back(buffer);
 }
 
+// remove a rectangular element in the sub mesh by index
 void ChSubGridMeshConnected::removeGridElement(int index){
     eleArr.erase(eleArr.begin()+index);
     eleCenter.erase(eleCenter.begin()+index);
 }
 
-
+// determine whether the center data is complete by
+// checking whether the number of baricenter = the number of rectangular elements in sub mesh
 bool ChSubGridMeshConnected::checkDataInteg(){
     int eleArrSize = eleArr.size();
     int eleCenterSize = eleCenter.size();
@@ -94,9 +101,7 @@ bool ChSubGridMeshConnected::checkDataInteg(){
     }
 }
 
-
-
-
+// return all vertices in a submesh
 std::vector<ChVector<double>> ChSubGridMeshConnected::getAllVertices(){
     std::vector<ChVector<double>> returnArr;
     // index indicator, so we can get rectangular connection infomation after
@@ -124,14 +129,14 @@ std::vector<ChVector<double>> ChSubGridMeshConnected::getAllVertices(){
     return returnArr;
 }
 
-
+// return the bounding box info of a specific submesh
 void ChSubGridMeshConnected::getBoundingInfo(){
     double xminBuff = 999.;
-    double xmaxBuff = -999;
+    double xmaxBuff = -999.;
     double yminBuff = 999.;
-    double ymaxBuff = -999;
-    double zminBuff = 999;
-    double zmaxBuff = -999;
+    double ymaxBuff = -999.;
+    double zminBuff = 999.;
+    double zmaxBuff = -999.;
     for(int i = 0; i<eleArr.size();i++){
         double xmintemp;
         double xmaxtemp;
@@ -150,6 +155,7 @@ void ChSubGridMeshConnected::getBoundingInfo(){
         if(zmaxtemp > zmaxBuff){zmaxBuff = zmaxtemp;}
     }
 
+    // update max and min info
     xmax = xmaxBuff;
     xmin = xminBuff;
     ymax = ymaxBuff;
@@ -168,12 +174,23 @@ bool checkRepeat(ChVector<double> a, std::vector<ChVector<double>> arr){
     return false;
 }
 
-
-
 // =============================================================================
 // ==========================ChGridMeshConnected.cpp============================
 //==============================================================================
 void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, int sub_on_side){
+
+    for (int i = 0; i<grid_ele.size();i++){
+        std::cout<<"ele: "<<i<<std::endl;
+        std::cout<<"p1: "<<grid_ele[i].p1<<std::endl;
+        std::cout<<"p2: "<<grid_ele[i].p2<<std::endl;
+        std::cout<<"p3: "<<grid_ele[i].p3<<std::endl;
+        std::cout<<"p4: "<<grid_ele[i].p4<<std::endl;
+        std::cout<<"=================="<<std::endl;
+    }
+
+
+
+
     double x_max=-999.;
     double x_min=999.;
     double y_max=-999.;
@@ -217,8 +234,8 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
     double x_tot_dis = x_max - x_min;
     double z_tot_dis = z_max - z_min;
 
-    std::cout<<"x_tot_dis"<<x_tot_dis<<std::endl;
-    std::cout<<"z_tot_dis"<<z_tot_dis<<std::endl;
+    std::cout<<"x_tot_dis: "<<x_tot_dis<<std::endl;
+    std::cout<<"z_tot_dis: "<<z_tot_dis<<std::endl;
 
     std::vector<double> x_cut;
     std::vector<double> z_cut;
@@ -228,13 +245,9 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
         z_cut.push_back(z_min+(z_tot_dis/sub_on_side)*(i+1));
     }
 
-
-
+    // add GridElements to SubMesh and construct a connected Grid Mesh structure
     for(int i = 0; i<x_cut.size();i++){
         for(int j = 0; j<z_cut.size();j++){
-           // std::cout<<"x_cut line: "<<x_cut[i];
-           // std::cout<<"y_cut line; "<<z_cut[j];
-           // std::cout<<"============="<<std::endl;
             ChSubGridMeshConnected subTemp;
 
             for(int k = 0;k<grid_ele.size();k++){
@@ -243,34 +256,29 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
                     grid_ele.erase(grid_ele.begin()+k);
                     k=k-1;
                 }
+               
             }
-            
-            subArr.push_back(subTemp);
+            addSubGridData(subTemp);
         }
     }
 
-    x_cut_Arr = x_cut;
-    z_cut_Arr = z_cut;
+    
+}
 
-    //std::cout<<"rest of gridele: "<<grid_ele.size()<<std::endl;
-
-    //for(int i = 0; i<grid_ele.size();i++){
-    //    std::cout<<grid_ele[i].p1<<" "<<grid_ele[i].p2<<" "<<grid_ele[i].p3<<" "<<grid_ele[i].p4<<std::endl;
-    //}
-
-    //for(int i = 0; i<grid_ele.size();i++){
-     //   std::cout<<"barcenter: "<<grid_ele[i].Baricenter()<<std::endl;
-    //}
+void ChGridMeshConnected::addSubGridData(ChSubGridMeshConnected subMesh){
+    subArr.push_back(subMesh);
 }
 
 
 std::vector<ChSubGridMeshConnected> ChGridMeshConnected::getSubGridData(){
+    // return a vector of sub mesh
     return subArr;
 }
 
 std::vector<ChVector<double>> ChGridMeshConnected::getAllVertices(){
     std::vector<ChVector<double>> returnArr;
 
+    // might need to check repeat on edges?
     for(int i = 0; i<subArr.size();i++){
         std::vector<ChVector<double>> returnSubArr;
         returnSubArr = subArr[i].getAllVertices();
@@ -314,6 +322,7 @@ void ChGridMeshConnected::getBoundingInfo(){
 // =============================================================================
 // ==========================GridMeshLoader.cpp===================================
 // ==============================================================================
+// Helper class to load a grid mesh
 std::vector<std::string> splitHelper(const std::string& s, char seperator);
 std::vector<std::string> split(std::string stringToBeSplitted, std::string delimeter);
 
@@ -380,8 +389,6 @@ bool GridMeshLoader::loadFromGridWaveFront(std::string path){
             temp.d = f4;
             temp.n_e = vn_index;
 
-            
-
             faces.push_back(temp);
         }
 
@@ -392,27 +399,12 @@ bool GridMeshLoader::loadFromGridWaveFront(std::string path){
             double a3 = std::stod(buffer[3],&sz);
             normals.push_back(ChVector<>({a1, a2, a3}));
         }
-
-        
     }
-
-    //for(int i = 0; i<vertices.size();i++){
-    //    std::cout<<vertices[i]<<std::endl;
-    //}
-
-    //std::cout<<vertices.size()<<std::endl;
-
-    //for (int i = 0; i<faces.size();i++){
-    //    std::cout << faces[i].a <<" "<<faces[i].b <<" "<<faces[i].c <<" "<< faces[i].d << std::endl;
-    //}
-    //std::cout<<"size()"<<faces.size()<<std::endl;
     
     for(int i = 0; i<faces.size();i++){
         gridEle.push_back(ChGridElement(vertices[faces[i].a-1], vertices[faces[i].b-1],
             vertices[faces[i].c-1], vertices[faces[i].d-1], normals[faces[i].n_e-1]));
     }
-
-
 
     file.close();
 
@@ -425,7 +417,7 @@ std::vector<ChGridElement> GridMeshLoader::loadObj(std::string path){
     
 }
 
-
+// Helper class to split a string into 2 by char seperator, this is for mesh loading
 std::vector<std::string> splitHelper(const std::string& s, char seperator)
 {
    std::vector<std::string> output;
@@ -446,7 +438,7 @@ std::vector<std::string> splitHelper(const std::string& s, char seperator)
     return output;
 }
 
-
+// Helper class to split a string into 2 by string seperator, this is for mesh loading
 std::vector<std::string> split(std::string stringToBeSplitted, std::string delimeter)
 {
      std::vector<std::string> splittedString;
@@ -467,31 +459,54 @@ std::vector<std::string> split(std::string stringToBeSplitted, std::string delim
 }
 
 
-
-
-
-
-
-
-
-
+// Helper class to find all active sub meshes
+// This function returns a vector of int values 
+// which are the indexes of active submesh
 std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
                                     std::vector<double> z_cut, 
                                     std::vector<ChSubGridMeshConnected> subMesh,
                                     std::vector<std::vector<chrono::vehicle::SCMDeformableSoilGrid::MovingPatchInfo>
->
- patches);
+>patches);
 
+// Check whether a int value already exists in cut_cross vector
 bool CheckIdxRepeat(int target,std::vector<int> cut_cross);
 
 SCMDeformableTerrain::SCMDeformableTerrain(ChSystem* system, bool visualization_mesh ) {
     m_ground = chrono_types::make_shared<SCMDeformableSoilGrid>(system, visualization_mesh);
     system->Add(m_ground);
+    Grid = std::make_shared<ChGridMeshConnected>();
 }
 
+// Initialize a grid mesh by input values
 void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeZ, int divX, int divZ, int sub_per_side)
 {
+    std::vector<double> x_cut;
+    std::vector<double> z_cut;
 
+    double dx = sizeX / divX;
+    double dz = sizeZ / divZ;
+
+    std::vector<ChGridElement> temp_store_buffer;
+
+    for(double i = 0; i<divX; i++){
+        for(double j = 0; j<divZ; j++){
+            ChVector<double> p1;
+            p1.Set(0+i*dx, height, 0+j*dz);
+            ChVector<double> p2;
+            p2.Set(0+(i+1)*dx, height, 0+j*dz);
+            ChVector<double> p3;
+            p3.Set(0+i*dx, height, 0+(j+1)*dz);
+            ChVector<double> p4;
+            p4.Set(0+(i+1)*dx, height, 0+(j+1)*dz);
+            ChVector<double> n;
+            n.Set(0, 1, 0);
+            temp_store_buffer.push_back(ChGridElement(p1, p2, p3, p4,n));
+        }
+    }
+    //Grid = new ChGridMeshConnected();
+    Grid->initializeData(temp_store_buffer, sub_per_side);
+    std::cout<<"test point"<<std::endl;
+    m_ground->Initialize(Grid);
 }
 
 
@@ -567,6 +582,18 @@ double SCMDeformableTerrain::GetTestHighOffset(){
     return m_ground->test_high_offset;
 }
 
+void SCMDeformableTerrain::SetBulldozingFlow(bool mb) {
+    m_ground->do_bulldozing = mb;
+}
+
+bool SCMDeformableTerrain::GetBulldozingFlow() const {
+    return m_ground->do_bulldozing;
+}
+
+const std::shared_ptr<ChTriangleMeshShape> SCMDeformableTerrain::GetMesh() const {
+    return m_ground->m_trimesh_shape;
+}
+
 void SCMDeformableTerrain::AddMovingPatch(std::shared_ptr<ChBody> body,
                                              const ChVector<>& point_on_body,
                                              double dimX,
@@ -602,6 +629,25 @@ void SCMDeformableTerrain::SetPlane(ChCoordsys<> mplane) {
     m_ground->plane = mplane;
 }
 
+void SCMDeformableTerrain::PrintStepStatistics(std::ostream& os) const {
+    os << " Timers:" << std::endl;
+    os << "   Calculate areas:         " << m_ground->m_timer_calc_areas() << std::endl;
+    os << "   Ray casting:             " << m_ground->m_timer_ray_casting() << std::endl;
+    if (m_ground->do_refinement)
+        os << "   Refinements:             " << m_ground->m_timer_refinement() << std::endl;
+    if (m_ground->do_bulldozing)
+        os << "   Bulldozing:              " << m_ground->m_timer_bulldozing() << std::endl;
+    os << "   Visualization:           " << m_ground->m_timer_visualization() << std::endl;
+
+    os << " Counters:" << std::endl;
+    os << "   Number vertices:         " << m_ground->m_num_vertices << std::endl;
+    os << "   Number ray-casts:        " << m_ground->m_num_ray_casts << std::endl;
+    os << "   Number faces:            " << m_ground->m_num_faces << std::endl;
+    if (m_ground->do_refinement)
+        os << "   Number faces refinement: " << m_ground->m_num_marked_faces << std::endl;
+}
+
+
 
 TerrainForce SCMDeformableTerrain::GetContactForce(std::shared_ptr<ChBody> body) const {
     auto itr = m_ground->m_contact_forces.find(body.get());
@@ -616,17 +662,10 @@ TerrainForce SCMDeformableTerrain::GetContactForce(std::shared_ptr<ChBody> body)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
+// Set user-supplied callback for evaluating location-dependent soil parameters
+void SCMDeformableTerrain::RegisterSoilParametersCallback(std::shared_ptr<SoilParametersCallback> cb) {
+    m_ground->m_soil_fun = cb;
+}
 
 
 
@@ -759,8 +798,9 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         vertices_connection[i] = neighbour_buffer;
     }
 
-    // Need to be changed?
-    ChVector<> N = plane.TransformDirectionLocalToParent(ChVector<>(0, 0, 1));
+    // Confirm how to structure this ?????
+    // If from mesh use normal provided by mesh ???????
+    ChVector<> N = plane.TransformDirectionLocalToParent(ChVector<>(0,1,0));
 
     // Loop through all vertices.
     // - set default SCM quantities (in case no ray-hit)
@@ -899,15 +939,15 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
         */
 
-        p_hit_level[i] = loc_point.z();
+        p_hit_level[i] = loc_point.y();
         double p_hit_offset = -p_hit_level[i] + p_level_initial[i];
 
         p_speeds[i] = contactable->GetContactPointSpeed(vertices[i]);
 
         ChVector<> T = -p_speeds[i];
         T = plane.TransformDirectionParentToLocal(T);
-        double Vn = -T.z();
-        T.z() = 0;
+        double Vn = -T.y();
+        T.y() = 0;
         T = plane.TransformDirectionLocalToParent(T);
         T.Normalize();
 

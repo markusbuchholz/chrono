@@ -22,12 +22,13 @@
 
 namespace chrono {
 namespace vehicle {
+
 // Utility Class and Functions for SCMDeformableGridTerrain
-
-
 // =============================================================================
-// ==========================faceVector.h===================================
+// ==========================faceVector.h=======================================
 //==============================================================================
+// faceVector object stores connection information for GridElement
+// int a, b, c, d are the indexes for the vertices, and n_e is the normal vector
 class faceVector {     
   public:
     int a;
@@ -37,11 +38,10 @@ class faceVector {
     int n_e;
 };
 
-
-
 // ============================================================================
 // ===========================ChGridElement.h==================================
 // ============================================================================
+// Grid Element is one rectangular grid element
 class ChGridElement{
   public:
     ChVector<> p1;  ///< first grid element vertex
@@ -74,12 +74,10 @@ class ChGridElement{
 };
 
 
-//=======================================================================================
-// ===========================ChSubGridMeshConnected.h===========================================
-//=======================================================================================
-
-
-
+// ======================================================================================
+// ===========================ChSubGridMeshConnected.h==================================
+// =======================================================================================
+// sub mesh class
 class ChSubGridMeshConnected{
   private:
     std::vector<ChGridElement> eleArr;
@@ -107,11 +105,10 @@ class ChSubGridMeshConnected{
 
 };
 
-
 // =============================================================================
 // ==========================ChGridMeshConnected.h=========================
-//==============================================================================
-
+// =============================================================================
+// The entire mesh class
 class ChGridMeshConnected{
   private:
     std::vector<ChSubGridMeshConnected> subArr;
@@ -121,6 +118,7 @@ class ChGridMeshConnected{
     std::vector<ChSubGridMeshConnected> getSubGridData();
     std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
+    void addSubGridData(ChSubGridMeshConnected subMesh);
 
     double xmin;
     double xmax;
@@ -128,6 +126,7 @@ class ChGridMeshConnected{
     double ymax;
     double zmin;
     double zmax;
+    
 
     std::vector<double> x_cut_Arr;
     std::vector<double> z_cut_Arr;
@@ -136,8 +135,9 @@ class ChGridMeshConnected{
 
 // =============================================================================
 // ==========================GridMeshLoader.h===================================
-//==============================================================================
-
+// =============================================================================
+// Helper class - Load a rectangular mesh into the program
+// The return is a vector of GridElement
 class GridMeshLoader {     
   private:
     std::vector<ChVector<>> vertices;
@@ -151,29 +151,6 @@ class GridMeshLoader {
     void addVertice(ChVector<>& a);
     std::vector<ChGridElement> loadObj(std::string path);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /// @addtogroup vehicle_terrain
@@ -233,6 +210,10 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
           int mbulldozing_erosion_n_propagations  ///< number of concentric vertex selections subject to erosion
       );
 
+      void SetBulldozingFlow(bool mb);
+      bool GetBulldozingFlow() const;
+
+
       void SetAutomaticRefinement(bool mr);
       bool GetAutomaticRefinement();
       void SetAutomaticRefinementResolution(double lv);
@@ -248,33 +229,36 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
       int returnVerticesSize();
       std::vector<ChVector<double>> returnVertices();
 
+      void PrintStepStatistics(std::ostream& os) const;
+
+      /// Get the underlying triangular mesh.
+      const std::shared_ptr<ChTriangleMeshShape> GetMesh() const;
+
+
+    /// Class to be used as a callback interface for location-dependent soil parameters.
+    /// A derived class must implement Set() and set **all** soil parameters (no defaults are provided).
+    class CH_VEHICLE_API SoilParametersCallback {
+      public:
+        virtual ~SoilParametersCallback() {}
+
+        /// Set the soil properties at a given (x,y) location.
+        /// Attention: the location is assumed to be provided in the (x,y) plane of the patch reference plane!
+        /// An implementation of this method in a derived class must set all soil parameters.
+        virtual void Set(double x, double y) = 0;
+
+        double m_Bekker_Kphi;    ///< Kphi, frictional modulus in Bekker model
+        double m_Bekker_Kc;      ///< Kc, cohesive modulus in Bekker model
+        double m_Bekker_n;       ///< n, exponent of sinkage in Bekker model (usually 0.6...1.8)
+        double m_Mohr_cohesion;  ///< Cohesion in, Pa, for shear failure
+        double m_Mohr_friction;  ///< Friction angle (in degrees!), for shear failure
+        double m_Janosi_shear;   ///< J , shear parameter, in meters, in Janosi-Hanamoto formula (usually few mm or cm)
+        double m_elastic_K;      ///< elastic stiffness K, per unit area, [Pa/m] (must be larger than Kphi)
+        double m_damping_R;      ///< vertical damping R, per unit area [Pa s/m] (proportional to vertical speed)
+    };
+      void RegisterSoilParametersCallback(std::shared_ptr<SoilParametersCallback> cb);
+
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
@@ -293,10 +277,6 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
     /// Initialize the terrain system with a grid mesh file
     void Initialize(std::shared_ptr<ChGridMeshConnected> Grid);
-
-
-
-
 
   private:
 
@@ -376,6 +356,7 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
     // aux. topology data
     //std::vector<std::set<int>> connected_vertexes;
+    std::shared_ptr<ChTriangleMeshShape> m_trimesh_shape;
     //std::vector<std::array<int, 4>> tri_map;
 
     bool do_bulldozing;
@@ -398,7 +379,7 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     bool m_moving_patch;                     // moving patch feature enabled?
 
     // Callback object for position-dependent soil properties
-    //std::shared_ptr<SCMDeformableTerrain::SoilParametersCallback> m_soil_fun;
+    std::shared_ptr<SCMDeformableTerrain::SoilParametersCallback> m_soil_fun;
 
     // Timers and counters
     ChTimer<double> m_timer_calc_areas;
@@ -412,6 +393,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     size_t m_num_marked_faces;
 
     std::unordered_map<ChContactable*, TerrainForce> m_contact_forces;
+
+    std::shared_ptr<ChGridMeshConnected> GetGrid(){return m_grid_shape;}
 
     friend class SCMDeformableTerrain;
 };
