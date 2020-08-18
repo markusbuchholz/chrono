@@ -71,6 +71,8 @@ class ChGridElement{
 
     ChVector<> Baricenter();
 
+    bool ContainVertex(ChVector<double> vertex);
+
 };
 
 
@@ -95,6 +97,10 @@ class ChSubGridMeshConnected{
     std::vector<ChGridElement> getEleArr(){return eleArr;}
     std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
+    void Update(ChVector<double> org, ChVector<double> new_vec);
+    void Refine(ChVector<double> target_vertex);
+
+    
 
     double xmax;
     double xmin;
@@ -119,6 +125,10 @@ class ChGridMeshConnected{
     std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
     void addSubGridData(ChSubGridMeshConnected subMesh);
+    const std::shared_ptr<ChTriangleMeshShape> GetVisMesh();
+    void Update(ChVector<double> org, ChVector<double> new_vec, int submesh_idx);
+    void Refine(ChVector<double> target_vertex, int submesh_idx);
+
 
     double xmin;
     double xmax;
@@ -129,7 +139,7 @@ class ChGridMeshConnected{
     
 
     std::vector<double> x_cut_Arr;
-    std::vector<double> z_cut_Arr;
+    std::vector<double> y_cut_Arr;
 };
 
 
@@ -216,9 +226,13 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
 
       void SetAutomaticRefinement(bool mr);
       bool GetAutomaticRefinement();
-      void SetAutomaticRefinementResolution(double lv);
 
+
+      // this function might not be needed anymore
+      void SetAutomaticRefinementResolution(double lv);
+      // this function might not be needed anymore
       int GetAutomaticRefinementResolution();
+
       void SetTestHighOffset(double mr);
       double GetTestHighOffset();
       void AddMovingPatch(std::shared_ptr<ChBody> body,
@@ -277,6 +291,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
     /// Initialize the terrain system with a grid mesh file
     void Initialize(std::shared_ptr<ChGridMeshConnected> Grid);
+    void GetMesh();
+
 
   private:
 
@@ -318,6 +334,7 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
 
 
+    std::vector<ChVector<>> vertices;
 
     std::vector<ChVector<>> p_vertices_initial;
     std::vector<ChVector<>> p_speeds;

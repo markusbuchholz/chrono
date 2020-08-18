@@ -588,6 +588,8 @@ void SCMDeformableSoil::ComputeInternalForces() {
     m_timer_bulldozing.reset();
     m_timer_visualization.reset();
 
+    
+
     // Readability aliases
     auto trimesh = m_trimesh_shape->GetMesh();
     std::vector<ChVector<>>& vertices = trimesh->getCoordsVertices();
@@ -1316,7 +1318,7 @@ void SCMDeformableSoil::ComputeInternalForces() {
     //
 
     // Use the SCM soil contact model as described in the paper:
-    // "Parameter Identification of a Planetary Rover Wheel–Soil
+    // "Parameter Identification of a Planetary Rover Wheelï¿½Soil
     // Contact Model via a Bayesian Approach", A.Gallina, R. Krenn et al.
 
     //

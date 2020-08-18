@@ -25,6 +25,7 @@
 
 #include "chrono_thirdparty/filesystem/path.h"
 
+
 using namespace chrono;
 using namespace chrono::irrlicht;
 
@@ -42,7 +43,7 @@ double min_mesh_resolution = 0.04;
 bool enable_bulldozing = true;
 
 // Enable/disable moving patch feature
-bool enable_moving_patch = false;
+bool enable_moving_patch = true;
 
 // If true, use provided callback to change soil properties based on location
 bool var_params = true;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[]) {
     my_system.Add(mrigidbody);
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
-    mrigidbody->SetPos(tire_center + ChVector<>(0, 0.3, 0));
+    mrigidbody->SetPos(tire_center + ChVector<>(1, 0.3, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
     trimesh->LoadWavefrontMesh(GetChronoDataFile("tractor_wheel.obj"));
@@ -149,7 +150,7 @@ int main(int argc, char* argv[]) {
     //
 
     // Create the 'deformable terrain' object
-    vehicle::SCMDeformableTerrain mterrain(&my_system);
+    vehicle::SCMDeformableTerrain mterrain(&my_system,true);
 
     // Displace/rotate the terrain reference plane.
     // Note that SCMDeformableTerrain uses a default ISO reference frame (Z up). Since the mechanism is modeled here in
@@ -164,7 +165,7 @@ int main(int argc, char* argv[]) {
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length);
+        mterrain.Initialize(0.2, width, length, div_width, div_length,3);
         // Turn on the automatic level of detail refinement, so a coarse terrain mesh
         // is automatically improved by adding more points under the wheel contact patch:
         mterrain.SetAutomaticRefinement(true);
@@ -172,13 +173,14 @@ int main(int argc, char* argv[]) {
     } else {
         int div_length = (int)std::ceil(length / min_mesh_resolution);
         int div_width = (int)std::ceil(width / min_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length);
+        mterrain.Initialize(0.2, width, length, div_width, div_length,3);
     }
     
     // Or use a height map:
     ////mterrain.Initialize(vehicle::GetDataFile("terrain/height_maps/test64.bmp"), "test64", 1.6, 1.6, 0, 0.3);
 
     // Set the soil terramechanical parameters
+    
     if (var_params) {
         // Location-dependent soil properties
         auto my_params = chrono_types::make_shared<MySoilParams>();
@@ -206,7 +208,7 @@ int main(int argc, char* argv[]) {
         ////                           3e4      // Damping (Pa s/m), proportional to negative vertical speed (optional)
         ////);
     }
-
+    
     if (enable_bulldozing) {
         mterrain.SetBulldozingFlow(true);  // inflate soil at the border of the rut
         mterrain.SetBulldozingParameters(
@@ -215,12 +217,12 @@ int main(int argc, char* argv[]) {
             5,    // number of erosion refinements per timestep
             10);  // number of concentric vertex selections subject to erosion
     }
-
+    std::cout<<"testdfsdfwefsfsdfsefsegtetet"<<std::endl;
     // Optionally, enable moving patch feature (reduces number of ray casts)
     if (enable_moving_patch) {
         mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 2 * tire_rad, 2 * tire_rad);
     }
-
+        
     // Set some visualization parameters: either with a texture, or with falsecolor plot, etc.
     ////mterrain.SetTexture(vehicle::GetDataFile("terrain/textures/grass.jpg"), 16, 16);
     mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE, 0, 30000.2);
@@ -231,8 +233,8 @@ int main(int argc, char* argv[]) {
     ////mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_STEP_PLASTIC_FLOW, 0, 0.0001);
     ////mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_ISLAND_ID, 0, 8);
     ////mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_IS_TOUCHED, 0, 8);
+    
     mterrain.GetMesh()->SetWireframe(true);
-
     // ==IMPORTANT!== Use this function for adding a ChIrrNodeAsset to all items
     application.AssetBindAll();
 
@@ -262,6 +264,11 @@ int main(int argc, char* argv[]) {
     */
 
     application.SetTimestep(0.002);
+    ///////////////// TEST /////////////////////////////
+    //std::vector<ChVector<>> buffer = mterrain.returnVertices();
+    //for(int i = 0; i<buffer.size();i++){
+    //    std::cout<<"p1: "<<buffer[i].x()<<" p2: "<<buffer[i].y()<<std::endl;
+   // }
 
     while (application.GetDevice()->run()) {
         if (output) {
@@ -275,8 +282,8 @@ int main(int argc, char* argv[]) {
         application.DoStep();
         ChIrrTools::drawColorbar(0, 30000, "Pressure yield [Pa]", application.GetDevice(), 1180);
         application.EndScene();
-
-        ////mterrain.PrintStepStatistics(std::cout);
+        
+        //mterrain.PrintStepStatistics(std::cout);
     }
 
     if (output) {
