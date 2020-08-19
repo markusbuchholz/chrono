@@ -120,6 +120,7 @@ int main(int argc, char* argv[]) {
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
     mrigidbody->SetPos(tire_center + ChVector<>(1, 0.3, 0));
+    //mrigidbody->SetPos(tire_center + ChVector<>(0, 0, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
     trimesh->LoadWavefrontMesh(GetChronoDataFile("tractor_wheel.obj"));
@@ -165,7 +166,7 @@ int main(int argc, char* argv[]) {
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length,3);
+        mterrain.Initialize(0.2, width, length, div_width, div_length,5,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
         // Turn on the automatic level of detail refinement, so a coarse terrain mesh
         // is automatically improved by adding more points under the wheel contact patch:
         mterrain.SetAutomaticRefinement(true);
@@ -173,7 +174,7 @@ int main(int argc, char* argv[]) {
     } else {
         int div_length = (int)std::ceil(length / min_mesh_resolution);
         int div_width = (int)std::ceil(width / min_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length,3);
+        mterrain.Initialize(0.2, width, length, div_width, div_length,5,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
     }
     
     // Or use a height map:
@@ -217,10 +218,9 @@ int main(int argc, char* argv[]) {
             5,    // number of erosion refinements per timestep
             10);  // number of concentric vertex selections subject to erosion
     }
-    std::cout<<"testdfsdfwefsfsdfsefsegtetet"<<std::endl;
     // Optionally, enable moving patch feature (reduces number of ray casts)
     if (enable_moving_patch) {
-        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 2 * tire_rad, 2 * tire_rad);
+        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 4 * tire_rad, 4 * tire_rad);
     }
         
     // Set some visualization parameters: either with a texture, or with falsecolor plot, etc.

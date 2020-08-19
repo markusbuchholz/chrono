@@ -173,22 +173,41 @@ void ChSubGridMeshConnected::getBoundingInfo(){
 }
 
 
+
+
 void ChSubGridMeshConnected::Update(ChVector<double> org, ChVector<double> new_vec){
-    int idx_buff = -1;
     for(int i = 0; i<eleArr.size();i++){
-        if(org==eleArr[i].p1){
-            eleArr[i].p1 = new_vec;
+
+        //std::cout<<"============"<<std::endl;
+        //std::cout<<"i: "<<i<<" x: "<<org.x()<<" comp x: "<<eleArr[i].p1.x()<<std::endl;
+        if(org.x()==eleArr[i].p1.x() && org.y()==eleArr[i].p1.y()){
+            //std::cout<<"change p1 aha old: "<<org<<" new: "<<new_vec<<std::endl;
+            //eleArr[i].p1.x() = new_vec.x();
+            //eleArr[i].p1.y() = new_vec.y();
+            eleArr[i].p1.z() = new_vec.z();
+            //std::cout<<"change p1 old: "<<org<<" new: "<<new_vec<<std::endl;
         }
-        if(org==eleArr[i].p2){
-            eleArr[i].p2 = new_vec;
+        if(org.x()==eleArr[i].p2.x() && org.y()==eleArr[i].p2.y()){
+            //eleArr[i].p2.x() = new_vec.x();
+            //eleArr[i].p2.y() = new_vec.y();
+            eleArr[i].p2.z() = new_vec.z();
+            //std::cout<<"change p2 old: "<<org<<" new: "<<new_vec<<std::endl;
         }
-        if(org==eleArr[i].p3){
-            eleArr[i].p3 = new_vec;
+        if(org.x()==eleArr[i].p3.x() && org.y()==eleArr[i].p3.y()){
+            //eleArr[i].p3.x() = new_vec.x();
+            //eleArr[i].p3.y() = new_vec.y();
+            eleArr[i].p3.z() = new_vec.z();
+            //std::cout<<"change p3 old: "<<org<<" new: "<<new_vec<<std::endl;
         }
-        if(org==eleArr[i].p4){
-            eleArr[i].p4 = new_vec;
+        if((org.x()==eleArr[i].p4.x() && org.y()==eleArr[i].p4.y())){
+            //eleArr[i].p4.x() = new_vec.x();
+            //eleArr[i].p4.y() = new_vec.y();
+            eleArr[i].p4.z() = new_vec.z();
+            //std::cout<<"change p4 old: "<<org<<" new: "<<new_vec<<std::endl;
         }
     }
+
+    
 }
 
 // This function performs first order refinement only
@@ -250,6 +269,96 @@ void ChSubGridMeshConnected::Refine(ChVector<double> target_vertex){
 }
 
 
+
+std::vector<ChVector<>> ChSubGridMeshConnected::returnMeshVert(){
+    return mesh_vertices;
+}
+std::vector<ChVector<int>> ChSubGridMeshConnected::returnMeshFace(){
+    return mesh_face;
+}
+
+
+
+bool checkRepeatPtr(ChVector<> vex, std::vector<ChVector<>>&);
+void ChSubGridMeshConnected::GetSubVisMesh(ChCoordsys<> plane){
+    mesh_vertices.clear();
+    mesh_face.clear();
+    //std::cout<<"test 1dsdsd"<<std::endl;
+
+    for(int j = 0; j<eleArr.size();j++){
+        ChVector<double> vertex_1 = plane.TransformPointLocalToParent(eleArr[j].p1);
+        ChVector<double> vertex_2 = plane.TransformPointLocalToParent(eleArr[j].p2);
+        ChVector<double> vertex_3 = plane.TransformPointLocalToParent(eleArr[j].p3);
+        ChVector<double> vertex_4 = plane.TransformPointLocalToParent(eleArr[j].p4);
+
+        //std::cout<<"y: "<<vertex_1.y()<<std::endl;
+        //std::cout<<"y: "<<vertex_2.y()<<std::endl;
+        //std::cout<<"y: "<<vertex_3.y()<<std::endl;
+        //std::cout<<"y: "<<vertex_4.y()<<std::endl;
+
+        int idx_1 = -1;
+        int idx_2 = -1;
+        int idx_3 = -1;
+        int idx_4 = -1;
+
+        if(checkRepeatPtr(vertex_1, mesh_vertices)==false){
+            mesh_vertices.push_back(vertex_1);
+            idx_1 = mesh_vertices.size()-1;
+        }else{
+            for(int a = 0; a<mesh_vertices.size();a++){
+                if(mesh_vertices[a]==vertex_1){
+                    idx_1 = a;
+                }
+            }
+        }
+
+        if(checkRepeatPtr(vertex_2, mesh_vertices)==false){
+            mesh_vertices.push_back(vertex_2);
+            idx_2 = mesh_vertices.size()-1;
+        }else{
+            for(int a = 0; a<mesh_vertices.size();a++){
+                if(mesh_vertices[a]==vertex_2){
+                    idx_2 = a;
+                }
+            }
+        }
+
+
+        if(checkRepeatPtr(vertex_3, mesh_vertices)==false){
+            mesh_vertices.push_back(vertex_3);
+            idx_3 = mesh_vertices.size()-1;
+        }else{
+            for(int a = 0; a<mesh_vertices.size();a++){
+                if(mesh_vertices[a]==vertex_3){
+                    idx_3 = a;
+                }
+            }
+        }
+
+        if(checkRepeatPtr(vertex_4, mesh_vertices)==false){
+            mesh_vertices.push_back(vertex_4);
+            idx_4 = mesh_vertices.size()-1;
+        }else{
+            for(int a = 0; a<mesh_vertices.size();a++){
+                if(mesh_vertices[a]==vertex_4){
+                    idx_4 = a;
+                }
+            }
+        }
+
+
+
+        ChVector<int> tri_face1(idx_1, idx_2, idx_4);
+        ChVector<int> tri_face2(idx_4, idx_3, idx_1);
+
+
+        mesh_face.push_back(tri_face1);
+        mesh_face.push_back(tri_face2);
+
+    }
+}
+
+
 bool checkRepeat(ChVector<double> a, std::vector<ChVector<double>> arr){
     for(int i = 0; i<arr.size();i++){
         if(arr[i] == a){
@@ -264,6 +373,8 @@ bool checkRepeat(ChVector<double> a, std::vector<ChVector<double>> arr){
 // ==========================ChGridMeshConnected.cpp============================
 //==============================================================================
 void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, int sub_on_side){
+
+    std::cout<<"subonside init: "<<sub_on_side<<std::endl;
     double x_max=-999.;
     double x_min=999.;
     double y_max=-999.;
@@ -308,9 +419,6 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
     double y_tot_dis = y_max - y_min;
     double z_tot_dis = z_max - z_min;
 
-    std::cout<<"x_tot_dis: "<<x_tot_dis<<std::endl;
-    std::cout<<"y_tot_dis: "<<y_tot_dis<<std::endl;
-    std::cout<<"z_tot_dis: "<<z_tot_dis<<std::endl;
 
     std::vector<double> x_cut;
     std::vector<double> y_cut;
@@ -329,7 +437,7 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
             ChSubGridMeshConnected subTemp;
 
             for(int k = 0;k<grid_ele.size();k++){
-                if(grid_ele[k].Baricenter().x()<x_cut[i] && grid_ele[k].Baricenter().y()<y_cut[j]){
+                if(grid_ele[k].Baricenter().x()<=x_cut[i] && grid_ele[k].Baricenter().y()<=y_cut[j]){
                     subTemp.addGridElement(grid_ele[k]);
                     grid_ele.erase(grid_ele.begin()+k);
                     k=k-1;
@@ -339,7 +447,6 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
             addSubGridData(subTemp);
         }
     }
-
     
 }
 
@@ -352,6 +459,10 @@ std::vector<ChSubGridMeshConnected> ChGridMeshConnected::getSubGridData(){
     // return a vector of sub mesh
     return subArr;
 }
+
+
+
+
 
 std::vector<ChVector<double>> ChGridMeshConnected::getAllVertices(){
     std::vector<ChVector<double>> returnArr;
@@ -368,6 +479,10 @@ std::vector<ChVector<double>> ChGridMeshConnected::getAllVertices(){
     }
     return returnArr;
 }
+
+
+
+
 
 void ChGridMeshConnected::getBoundingInfo(){
     double xminBuff = 999.;
@@ -400,92 +515,80 @@ void ChGridMeshConnected::getBoundingInfo(){
     zmin = zminBuff;
 }
 
-const std::shared_ptr<ChTriangleMeshShape> ChGridMeshConnected::GetVisMesh(){
-    std::shared_ptr<ChTriangleMeshShape> return_buff = std::shared_ptr<ChTriangleMeshShape>(new ChTriangleMeshShape());
-    std::shared_ptr<geometry::ChTriangleMeshConnected> convert_trimesh 
-    = std::shared_ptr<geometry::ChTriangleMeshConnected>(new geometry::ChTriangleMeshConnected());
 
-    std::vector<ChVector<double>> ret_vertices;
-    std::vector<ChVector<int>> ret_faces;
+// Check whether a int value already exists in cut_cross vector
+bool CheckIdxRepeat(int target,std::vector<int> cut_cross);
+
+
+void ChGridMeshConnected::GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh, ChCoordsys<> plane
+,std::vector<int> active_sub_mesh){
+    std::vector<ChVector<int>>& idx_vertices = trimesh->GetMesh()->getIndicesVertexes();
+    std::vector<ChVector<>>& vertices = trimesh->GetMesh()->getCoordsVertices();
+
+    idx_vertices.clear();
+    vertices.clear();
+
     
+    for(int i = 0; i<active_sub_mesh.size();i++){
+        subArr[active_sub_mesh[i]].GetSubVisMesh(plane);
+        //std::cout<<"i: "<<active_sub_mesh[i]<<std::endl;
+    }
+
+    
+
+    int vert_size = vertices.size();
+    int face_size = idx_vertices.size();
+
+    int ind_pointer = vert_size;
+    
+
     for(int i = 0; i<subArr.size();i++){
-        std::vector<ChGridElement> eleArr_buff = subArr[i].getEleArr();
-        for(int j = 0; j<eleArr_buff.size();j++){
-            ChVector<double> vertex_1 = eleArr_buff[j].p1;
-            ChVector<double> vertex_2 = eleArr_buff[j].p2;
-            ChVector<double> vertex_3 = eleArr_buff[j].p3;
-            ChVector<double> vertex_4 = eleArr_buff[j].p4;
+        
+        std::vector<ChVector<>> sub_buff_vertices = subArr[i].returnMeshVert();
+        
+        vertices.insert( vertices.end(), sub_buff_vertices.begin(), sub_buff_vertices.end());
+        
+        std::vector<ChVector<int>> sub_buff_faces = subArr[i].returnMeshFace();
+        for(int j = 0; j<sub_buff_faces.size();j++){
+            sub_buff_faces[j].x() = sub_buff_faces[j].x() + ind_pointer ;
+            sub_buff_faces[j].y() = sub_buff_faces[j].y() + ind_pointer ;
+            sub_buff_faces[j].z() = sub_buff_faces[j].z() + ind_pointer ;
+        }
 
-            int idx_1 = -1;
-            int idx_2 = -1;
-            int idx_3 = -1;
-            int idx_4 = -1;
+        idx_vertices.insert( idx_vertices.end(), sub_buff_faces.begin(), sub_buff_faces.end());
 
-            if(checkRepeat(vertex_1, ret_vertices)==false){
-                ret_vertices.push_back(vertex_1);
-                idx_1 = ret_vertices.size()-1;
-            }else{
-                for(int a = 0; a<ret_vertices.size();a++){
-                    if(ret_vertices[a]==vertex_1){
-                        idx_1 = a;
-                    }
-                }
-            }
+        int sub_size = sub_buff_vertices.size();
+        ind_pointer = ind_pointer+sub_size;
+    } 
 
-            if(checkRepeat(vertex_2, ret_vertices)==false){
-                ret_vertices.push_back(vertex_2);
-                idx_2 = ret_vertices.size()-1;
-            }else{
-                for(int a = 0; a<ret_vertices.size();a++){
-                    if(ret_vertices[a]==vertex_2){
-                        idx_2 = a;
-                    }
-                }
-            }
+}
+
+void ChGridMeshConnected::InitializeMeshVis(ChCoordsys<> plane){
+    for(int i = 0 ; i<subArr.size();i++){
+        subArr[i].GetSubVisMesh(plane);
+    }
+}
 
 
-            if(checkRepeat(vertex_3, ret_vertices)==false){
-                ret_vertices.push_back(vertex_3);
-                idx_3 = ret_vertices.size()-1;
-            }else{
-                for(int a = 0; a<ret_vertices.size();a++){
-                    if(ret_vertices[a]==vertex_3){
-                        idx_3 = a;
-                    }
-                }
-            }
 
-            if(checkRepeat(vertex_4, ret_vertices)==false){
-                ret_vertices.push_back(vertex_4);
-                idx_4 = ret_vertices.size()-1;
-            }else{
-                for(int a = 0; a<ret_vertices.size();a++){
-                    if(ret_vertices[a]==vertex_4){
-                        idx_4 = a;
-                    }
-                }
-            }
 
-            ChVector<int> tri_face1(idx_1, idx_2, idx_3);
-            ChVector<int> tri_face2(idx_3, idx_4, idx_1);
 
-            ret_faces.push_back(tri_face1);
-            ret_faces.push_back(tri_face2);
+bool checkRepeatPtr(ChVector<> vex, std::vector<ChVector<>>& arr){
+    for(int i = 0; i<arr.size();i++){
+        if(arr[i] == vex){
+            return true;
         }
     }
 
+    return false;
 
-    convert_trimesh->m_vertices = ret_vertices;
-    convert_trimesh->m_face_v_indices = ret_faces;
-
-
-    return_buff->SetMesh(convert_trimesh);
-
-    return return_buff;
 }
 
 void ChGridMeshConnected::Update(ChVector<double> org, ChVector<double> new_vec, int submesh_idx){
-    subArr[submesh_idx].Update(org, new_vec);
+    //if(submesh_idx==2){
+        subArr[submesh_idx].Update(org, new_vec);
+        //std::cout<<"old: "<<org<<" new: "<<new_vec<<std::endl;
+    //}
 }
 
 void ChGridMeshConnected::Refine(ChVector<double> target_vertex, int submesh_idx){
@@ -645,8 +748,7 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
                                     std::vector<std::vector<chrono::vehicle::SCMDeformableSoilGrid::MovingPatchInfo>
 >patches);
 
-// Check whether a int value already exists in cut_cross vector
-bool CheckIdxRepeat(int target,std::vector<int> cut_cross);
+
 
 SCMDeformableTerrain::SCMDeformableTerrain(ChSystem* system, bool visualization_mesh ) {
     m_ground = chrono_types::make_shared<SCMDeformableSoilGrid>(system, visualization_mesh);
@@ -655,8 +757,10 @@ SCMDeformableTerrain::SCMDeformableTerrain(ChSystem* system, bool visualization_
 }
 
 // Initialize a grid mesh by input values
-void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY, int divX, int divY, int sub_per_side)
+void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY, int divX, int divY, int sub_per_side, ChCoordsys<> plane)
 {
+    SetPlane(plane);
+
     std::vector<double> x_cut;
     std::vector<double> y_cut;
 
@@ -680,18 +784,26 @@ void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY,
             temp_store_buffer.push_back(ChGridElement(p1, p2, p3, p4,n));
         }
     }
-    //Grid = new ChGridMeshConnected();
-    std::cout<<"temp_store_buffer: "<<temp_store_buffer.size()<<std::endl;
+
     Grid->initializeData(temp_store_buffer, sub_per_side);
+
+    
+
+    Grid->InitializeMeshVis(plane);
+
     m_ground->Initialize(Grid);
+
+    m_ground->m_height = height;
 }
 
 
-void SCMDeformableTerrain::Initialize(const std::string& mesh_file, int sub_per_side)
+void SCMDeformableTerrain::Initialize(const std::string& mesh_file, int sub_per_side,ChCoordsys<> plane)
 {
     GridMeshLoader test;
     std::vector<ChGridElement> result = test.loadObj(mesh_file);
     Grid->initializeData(result, sub_per_side);
+
+    SetPlane(plane);
     
     m_ground->Initialize(Grid);
 }
@@ -842,6 +954,11 @@ void SCMDeformableTerrain::RegisterSoilParametersCallback(std::shared_ptr<SoilPa
     m_ground->m_soil_fun = cb;
 }
 
+void SCMDeformableTerrain::SetColor(ChColor color) {
+    if (m_ground->m_color)
+        m_ground->m_color->SetColor(color);
+}
+
 
 
 std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
@@ -863,8 +980,6 @@ SCMDeformableSoilGrid::SCMDeformableSoilGrid(ChSystem* system, bool visualizatio
     m_trimesh_shape = std::shared_ptr<ChTriangleMeshShape>(new ChTriangleMeshShape);
 
     if (visualization_mesh) {
-        // Need a way to split rect mesh to tri mesh
-        // Create the default mesh asset
          m_color = std::shared_ptr<ChColorAsset>(new ChColorAsset);
          m_color->SetColor(ChColor(0.3f, 0.3f, 0.3f));
          this->AddAsset(m_color);
@@ -948,16 +1063,20 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     std::vector<double> y_cut = m_grid_shape->y_cut_Arr;
 
     // indexes of submesh(es) which are active
-    std::vector<int> activeSubMesh_idx = FindActiveSubMeshIdx(x_cut, y_cut, subMesh, m_patches);
+    active_sub_mesh.clear();
+    //std::cout<<"active_sub_mesh_length: "<<active_sub_mesh.size()<<std::endl;
+    active_sub_mesh = FindActiveSubMeshIdx(x_cut, y_cut, subMesh, m_patches);
+    //std::cout<<"active_sub_mesh_length after: "<<active_sub_mesh.size()<<std::endl;
 
-    // size_cut point
     std::vector<int> activeSubMesh_size_buffer;
 
 
     // Get all vertices from active sub-mesh
     vertices.clear();
-    for(int i = 0; i < activeSubMesh_idx.size(); i++){
-        std::vector<ChVector<>> sub_vertices = subMesh[activeSubMesh_idx[i]].getAllVertices(); 
+    //std::cout<<"vertices size before add: "<<vertices.size()<<std::endl;
+    for(int i = 0; i < active_sub_mesh.size(); i++){
+        std::vector<ChVector<>> sub_vertices = subMesh[active_sub_mesh[i]].getAllVertices(); 
+       std::cout<<"partition: "<<active_sub_mesh[i]<<" size: "<<sub_vertices.size()<<std::endl;
         for(int j = 0; j<sub_vertices.size() ; j++){
             if(checkRepeatVertices(sub_vertices[j],vertices) == false){
                 vertices.push_back(sub_vertices[j]);
@@ -966,10 +1085,9 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         activeSubMesh_size_buffer.push_back(vertices.size()-1); //push the index cut point of that array
     }
 
+    std::cout<<"vertices size: "<<vertices.size()<<std::endl;
+
     SetupAuxData();
-
-    std::cout<<"test point 1"<<std::endl;
-
 
     // Update Connection information
     std::vector<std::vector<int>> vertices_connection;
@@ -977,15 +1095,19 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         std::vector<int> neighbour_buffer = GetVertexNeighbour(vertices[i], subMesh, vertices);
         vertices_connection.push_back(neighbour_buffer);
     }
-    for (unsigned int iv = 0; iv < vertices.size(); ++iv) {
-        p_area[iv] = 0,04; //need an api to get uniform area???????
+    for (int i = 0; i < vertices.size(); i++) {
+        p_level_initial[i] = (vertices[i]).z();
+        p_area[i] = 0.2*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        
+    
+        //std::cout<<"inti area: "<<p_area[i]<<std::endl;
     }
 
 
     // Confirm how to structure this ?????
     // If from mesh use normal provided by mesh ???????
-    //ChVector<> N = plane.TransformDirectionLocalToParent(ChVector<>(0,0,1));
-    ChVector<> N = ChVector<>(0,0,1);
+    ChVector<> N = plane.TransformDirectionLocalToParent(ChVector<>(0,0,1));
+    //ChVector<> N = ChVector<>(0,0,1);
     // Loop through all vertices.
     // - set default SCM quantities (in case no ray-hit)
     // - skip vertices outside moving patch (if option enabled)
@@ -998,7 +1120,6 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         int patch_id;                // index of associated patch id
     };
     std::unordered_map<int, HitRecord> hits;
-     std::cout<<"test point 2"<<std::endl;
     std::vector<int> hit_vertices_idx;
     for (int i = 0; i < vertices.size(); ++i) {
         //auto v = plane.TransformParentToLocal(vertices[i]);
@@ -1028,7 +1149,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
         // Perform ray casting from current vertex
         collision::ChCollisionSystem::ChRayhitResult mrayhit_result;
-        ChVector<> to = vertices[i] + N * test_high_offset;
+        //ChVector<> to = vertices[i] + N * test_high_offset;
+        ChVector<> to = plane.TransformPointLocalToParent(vertices[i]+ChVector<>(0,0,1)*test_high_offset);
         ChVector<> from = to - N * test_low_offset;
         this->GetSystem()->GetCollisionSystem()->RayHit(from, to, mrayhit_result);
         m_num_ray_casts++;
@@ -1038,20 +1160,26 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             hit_vertices_idx.push_back(i);
         }
     }
-     std::cout<<"test point 3"<<std::endl;
+
+    
     // this vector stores all original vertices
     std::vector<ChVector<double>> original_vertice_hit;
-    std::cout<<"hit_size: "<<hit_vertices_idx.size()<<std::endl;
+    //std::cout<<"hit_size: "<<hit_vertices_idx.size()<<std::endl;
     // Now we have the indexes of all hit vertices, now we need to store all these original ChVector 
     // for comparison
     for (int i = 0; i<hit_vertices_idx.size();i++){
-        original_vertice_hit.push_back(vertices[i]);
+        original_vertice_hit.push_back(ChVector<>(vertices[hit_vertices_idx[i]].x(),
+        vertices[hit_vertices_idx[i]].y(), vertices[hit_vertices_idx[i]].z()));
     }
+
+ 
+
 
    // Loop through all hit vertices and determine to which contact patch they belong.
     // We use here the vertices_connection map (from a vertex to its adjacent vertices) which is
     // set up at initialization and updated when the mesh is refined (if refinement is enabled).
     // Use a queue-based flood-filling algorithm.
+
     int num_patches = 0;
     for (auto& h : hits) {
         int i = h.first;
@@ -1077,6 +1205,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
     }
 
+
     // Collect hit vertices assigned to each patch.
     struct PatchRecord {
         std::vector<ChVector2<>> points;  // points in patch (projected on reference plane)
@@ -1086,7 +1215,9 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     };
     std::vector<PatchRecord> patches(num_patches);
     for (auto& h : hits) {
-        ChVector<> v = plane.TransformParentToLocal(vertices[h.first]);
+        //ChVector<> v = plane.TransformParentToLocal(vertices[h.first]);
+        ChVector<> v = vertices[h.first];
+
         patches[h.second.patch_id].points.push_back(ChVector2<>(v.x(), v.y()));
     }
 
@@ -1103,6 +1234,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
     }
 
+
     // Initialize local values for the soil parameters
     double Bekker_Kphi = m_Bekker_Kphi;
     double Bekker_Kc = m_Bekker_Kc;
@@ -1113,6 +1245,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     double elastic_K = m_elastic_K;
     double damping_R = m_damping_R;
 
+
     // Process only hit vertices
     for (auto& h : hits) {
         int i = h.first;
@@ -1121,8 +1254,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         int patch_id = h.second.patch_id;
 
         auto loc_point = plane.TransformParentToLocal(abs_point);
+        //auto loc_point = abs_point;
 
-        /*
         if (m_soil_fun) {
             m_soil_fun->Set(loc_point.x(), loc_point.y());
 
@@ -1135,18 +1268,21 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             elastic_K = m_soil_fun->m_elastic_K;
             damping_R = m_soil_fun->m_damping_R;
         }
-        */
+        
 
-        p_hit_level[i] = loc_point.y();
+        p_hit_level[i] = loc_point.z();
         double p_hit_offset = -p_hit_level[i] + p_level_initial[i];
+        //std::cout<<"p_hit_offset: "<<p_hit_offset<<std::endl;
 
-        p_speeds[i] = contactable->GetContactPointSpeed(vertices[i]);
-
+        p_speeds[i] = contactable->GetContactPointSpeed(plane.TransformLocalToParent(vertices[i]));
+        //std::cout<<"test poitn 7"<<std::endl;
+        //std::cout<<"p_speeds[]: "<<p_speeds[i]<<std::endl;
         ChVector<> T = -p_speeds[i];
-        T = plane.TransformDirectionParentToLocal(T);
+        //T = plane.TransformDirectionParentToLocal(T);
+        //std::cout<<"T: "<<T<<std::endl;
         double Vn = -T.y();
         T.y() = 0;
-        T = plane.TransformDirectionLocalToParent(T);
+        //T = plane.TransformDirectionLocalToParent(T);
         T.Normalize();
 
         // Compute i-th force:
@@ -1155,7 +1291,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
         // Elastic try:
         p_sigma[i] = elastic_K * (p_hit_offset - p_sinkage_plastic[i]);
-
+        
         // Handle unilaterality:
         if (p_sigma[i] < 0) {
             p_sigma[i] = 0;
@@ -1167,7 +1303,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
             p_sinkage[i] = p_hit_offset;
             p_level[i] = p_hit_level[i];
-
+            
             // Accumulate shear for Janosi-Hanamoto
             p_kshear[i] += Vdot(p_speeds[i], -T) * GetSystem()->GetStep();
 
@@ -1180,14 +1316,12 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
                 p_sinkage_plastic[i] = p_sinkage[i] - p_sigma[i] / elastic_K;
                 p_step_plastic_flow[i] = (p_sinkage_plastic[i] - old_sinkage_plastic) / GetSystem()->GetStep();
             }
-
             p_sinkage_elastic[i] = p_sinkage[i] - p_sinkage_plastic[i];
 
             // add compressive speed-proportional damping (not clamped by pressure yield)
             ////if (Vn < 0) {
             p_sigma[i] += -Vn * damping_R;
             ////}
-
             // Mohr-Coulomb
             double tau_max = Mohr_cohesion + p_sigma[i] * tan(Mohr_friction * CH_C_DEG_TO_RAD);
 
@@ -1196,6 +1330,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
             Fn = N * p_area[i] * p_sigma[i];
             Ft = T * p_area[i] * p_tau[i];
+
+    
 
             if (ChBody* rigidbody = dynamic_cast<ChBody*>(contactable)) {
                 // [](){} Trick: no deletion for this shared ptr, since 'rigidbody' was not a new ChBody()
@@ -1211,11 +1347,13 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
                 // All components of the generalized terrain force are expressed in the global frame.
                 auto itr = m_contact_forces.find(contactable);
                 if (itr == m_contact_forces.end()) {
+                    
                     // Create new entry and initialize generalized force.
                     ChVector<> force = Fn + Ft;
                     TerrainForce frc;
                     frc.point = srigidbody->GetPos();
                     frc.force = force;
+                    //std::cout<<"force: "<<force<<std::endl;
                     frc.moment = Vcross(Vsub(vertices[i], srigidbody->GetPos()), force);
                     m_contact_forces.insert(std::make_pair(contactable, frc));
                 } else {
@@ -1234,45 +1372,64 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
             }
 
-            // Update mesh representation
-            vertices[i] = p_vertices_initial[i] - N * p_sinkage[i];
+            vertices[i] = p_vertices_initial[i] - ChVector<>(0,0,1) * p_sinkage[i];
 
         }  // end positive contact force
 
     }  // end loop on ray hits
-
     m_timer_ray_casting.stop();
 
     // -----------------------------------------------
     // store all updated hit vertices
     // -----------------------------------------------
+    //std::cout<<"processed size: "<<hit_vertices_idx.size()<<std::endl;
     std::vector<ChVector<double>> processed_vertices_hit;
     for (int i = 0; i<hit_vertices_idx.size();i++){
-        processed_vertices_hit.push_back(vertices[i]);
-        std::cout<<"stoer all updated hit"<<std::endl;
+        processed_vertices_hit.push_back(vertices[hit_vertices_idx[i]]);
     }
-    // ----------------------------------------------
-    // ----------------------------------------------
+
 
 
     // ----------------------------------------------
     // update the Grid data structure
     // ----------------------------------------------
-    for (int i = 0; i<hit_vertices_idx.size();i++){
-           for(int j = 0; j<activeSubMesh_idx.size(); j++){
-            if(hit_vertices_idx[i]>activeSubMesh_size_buffer[j]){
-                m_grid_shape->Update(original_vertice_hit[hit_vertices_idx[i]],vertices[hit_vertices_idx[i]], j+1);
-                break;
-            }
 
-            if(j==activeSubMesh_idx.size()-1){
-                m_grid_shape->Update(original_vertice_hit[hit_vertices_idx[i]],vertices[hit_vertices_idx[i]], 0);
+
+
+    for(int i = 0; i<active_sub_mesh.size(); i++){
+        for(int j = 0; j<hit_vertices_idx.size();j++){
+
+            if(hit_vertices_idx[j]<=activeSubMesh_size_buffer[i]){
+                //std::cout<<"345 orginal: "<<original_vertice_hit[j]<<std::endl;
+                //std::cout<<"345 new: "<<processed_vertices_hit[j]<<std::endl;
+                m_grid_shape->Update(original_vertice_hit[j],processed_vertices_hit[j], active_sub_mesh[i]);
+                hit_vertices_idx.erase(hit_vertices_idx.begin()+j);
+                original_vertice_hit.erase(original_vertice_hit.begin()+j);
+                processed_vertices_hit.erase(processed_vertices_hit.begin()+j);
+                j = j-1;
             }
+            //---------------------------------------------------------
         }
-        std::cout<<"update the Grid data structure"<<std::endl;
     }
+
+    
+
+
+
+    
+    // Create the default mesh asset
+    m_color = std::shared_ptr<ChColorAsset>(new ChColorAsset);
+    m_color->SetColor(ChColor(0.3f, 0.3f, 0.3f));
+    this->AddAsset(m_color);
+    GetMesh();
+    this->AddAsset(m_trimesh_shape);
+    m_trimesh_shape->SetWireframe(true);
     // ----------------------------------------------
     // ----------------------------------------------
+
+    //
+    // Update the visualization colors
+    //
 
 
 
@@ -1284,19 +1441,21 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // ----------------------------------------------
     // Rectangular Mesh Refinement
     // ----------------------------------------------
+    /*
     for(int i = 0; i<hit_vertices_idx.size();i++){
-        for(int j = 0; j<activeSubMesh_idx.size(); j++){
+        for(int j = 0; j<active_sub_mesh.size(); j++){
             if(hit_vertices_idx[i]>activeSubMesh_size_buffer[j]){
                 m_grid_shape->Refine(vertices[hit_vertices_idx[i]], j+1);
                 break;
             }
 
-            if(j==activeSubMesh_idx.size()-1){
+            if(j==active_sub_mesh.size()-1){
                 m_grid_shape->Refine(vertices[hit_vertices_idx[i]], 0);
             }
         }
         
     }
+    */
     // ----------------------------------------------
     // ----------------------------------------------
 
@@ -1306,6 +1465,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 }
 
 void SCMDeformableSoilGrid::SetupAuxData(){
+
+    p_vertices_initial = vertices;
     p_speeds.resize(vertices.size());
     p_step_plastic_flow.resize(vertices.size());
     p_level.resize(vertices.size());
@@ -1325,12 +1486,13 @@ void SCMDeformableSoilGrid::SetupAuxData(){
 
     for (int i = 0; i < vertices.size(); ++i) {
         p_level[i] = plane.TransformParentToLocal(vertices[i]).z();
+        //p_level[i] = (vertices[i]).z();
         p_level_initial[i] = p_level[i];
     }
 }
 
 void SCMDeformableSoilGrid::GetMesh(){
-    m_trimesh_shape = m_grid_shape->GetVisMesh();
+    m_grid_shape->GetVisMesh(m_trimesh_shape, plane, active_sub_mesh);
 }
 
 
@@ -1344,7 +1506,7 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
 
     for(int i = 0; i<subMesh.size();i++){
         subMesh[i].getBoundingInfo();
-        std::vector<ChGridElement> ele_arr_temp = subMesh[i].getEleArr();
+
         for(int j = 0; j<patches.size();j++){
             
             double patch_cen_x = (patches[j].m_min.x() + patches[j].m_max.x()) / 2;
@@ -1352,10 +1514,58 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
 
             if(patch_cen_x > subMesh[i].xmin && patch_cen_x <subMesh[i].xmax && patch_cen_y > subMesh[i].ymin && patch_cen_y < subMesh[i].ymax)
             {
-                returnBuffer.push_back(i);
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
             }
+
+
+            if(patches[j].m_min.x()<subMesh[i].xmax && subMesh[i].xmin<patches[j].m_min.x() && patches[j].m_min.y()<subMesh[i].ymax && patches[j].m_min.y()>subMesh[i].ymin )
+            {
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+
+            if(patches[j].m_max.x()<subMesh[i].xmax && subMesh[i].xmin<patches[j].m_max.x() && patches[j].m_min.y()<subMesh[i].ymax && patches[j].m_min.y()>subMesh[i].ymin )
+            {
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+
+            if(patches[j].m_max.x()<subMesh[i].xmax && subMesh[i].xmin<patches[j].m_max.x() && patches[j].m_max.y()<subMesh[i].ymax && patches[j].m_max.y()>subMesh[i].ymin )
+            {
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+            if(patches[j].m_min.x()<subMesh[i].xmax && subMesh[i].xmin<patches[j].m_min.x() && patches[j].m_max.y()<subMesh[i].ymax && patches[j].m_max.y()>subMesh[i].ymin )
+            {
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+            if(patches[j].m_min.x()<subMesh[i].xmin  && patches[j].m_max.x()>subMesh[i].xmax){
+                if(patches[j].m_min.y()<subMesh[i].ymin  && patches[j].m_max.y()>subMesh[i].ymax){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+
+        
         }
+
+
+
+
     }
+
+    
 
     return returnBuffer;
 }

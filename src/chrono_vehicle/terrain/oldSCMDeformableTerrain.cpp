@@ -794,6 +794,7 @@ void SCMDeformableSoil::ComputeInternalForces() {
         p_hit_level[i] = loc_point.z();
         double p_hit_offset = -p_hit_level[i] + p_level_initial[i];
 
+       
         p_speeds[i] = contactable->GetContactPointSpeed(vertices[i]);
 
         ChVector<> T = -p_speeds[i];
@@ -892,6 +893,7 @@ void SCMDeformableSoil::ComputeInternalForces() {
 
             // Update mesh representation
             vertices[i] = p_vertices_initial[i] - N * p_sinkage[i];
+            
 
         }  // end positive contact force
 

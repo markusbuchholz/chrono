@@ -87,6 +87,10 @@ class ChSubGridMeshConnected{
 
     //std::vector<std::vector<int>> eleConnectedIdx;
 
+    //mesh try -> store triangular mesh info
+    std::vector<ChVector<>> mesh_vertices;
+    std::vector<ChVector<int>> mesh_face;
+
 
   public:
     void addGridElement(ChGridElement);
@@ -99,7 +103,9 @@ class ChSubGridMeshConnected{
     void getBoundingInfo();
     void Update(ChVector<double> org, ChVector<double> new_vec);
     void Refine(ChVector<double> target_vertex);
-
+    std::vector<ChVector<>> returnMeshVert();
+    std::vector<ChVector<int>> returnMeshFace();
+    void GetSubVisMesh(ChCoordsys<> plane);
     
 
     double xmax;
@@ -125,9 +131,12 @@ class ChGridMeshConnected{
     std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
     void addSubGridData(ChSubGridMeshConnected subMesh);
-    const std::shared_ptr<ChTriangleMeshShape> GetVisMesh();
+    //std::shared_ptr<ChTriangleMeshShape> 
+    void GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh,ChCoordsys<> plane, std::vector<int> active_sub_mesh);
     void Update(ChVector<double> org, ChVector<double> new_vec, int submesh_idx);
     void Refine(ChVector<double> target_vertex, int submesh_idx);
+    void InitializeMeshVis(ChCoordsys<> plane);
+    
 
 
     double xmin;
@@ -198,9 +207,9 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
 
       ~SCMDeformableTerrain(){}
 
-      void Initialize(double height, double sizeX, double sizeZ, int divX, int divZ, int sub_per_side=2);
+      void Initialize(double height, double sizeX, double sizeZ, int divX, int divZ, int sub_per_side=2, ChCoordsys<> plane=ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
 
-      void Initialize(const std::string& mesh_file, int sub_per_side=2);
+      void Initialize(const std::string& mesh_file, int sub_per_side=2, ChCoordsys<> plane=ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
 
       void SetSoilParameters(
           double Bekker_Kphi,    // Kphi, frictional modulus in Bekker model
@@ -247,6 +256,10 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
 
       /// Get the underlying triangular mesh.
       const std::shared_ptr<ChTriangleMeshShape> GetMesh() const;
+
+      void SetColor(ChColor color);
+
+
 
 
     /// Class to be used as a callback interface for location-dependent soil parameters.
@@ -332,7 +345,7 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     std::shared_ptr<ChGridMeshConnected> m_grid_shape;
     double m_height;
 
-
+    std::vector<int> active_sub_mesh;
 
     std::vector<ChVector<>> vertices;
 
