@@ -1716,13 +1716,14 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
 
     for(int i = 0; i<subMesh.size();i++){
         
+        double sub_cen_x = (subMesh[i].xmin + subMesh[i].xmax) / 2;
+        double sub_cen_y = (subMesh[i].ymin + subMesh[i].ymax) / 2;
 
         for(int j = 0; j<patches.size();j++){
             
             double patch_cen_x = (patches[j].m_min.x() + patches[j].m_max.x()) / 2;
             double patch_cen_y = (patches[j].m_min.y() + patches[j].m_max.y()) / 2;
-            double sub_cen_x = (subMesh[i].xmin + subMesh[i].xmax) / 2;
-            double sub_cen_y = (subMesh[i].ymin + subMesh[i].ymax) / 2;
+
 
             if(patch_cen_x > subMesh[i].xmin && patch_cen_x <subMesh[i].xmax && patch_cen_y > subMesh[i].ymin && patch_cen_y < subMesh[i].ymax)
             {
@@ -1814,14 +1815,7 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
 
                 }
             }
-
-
-        
         }
-
-
-
-
     }
 
     
