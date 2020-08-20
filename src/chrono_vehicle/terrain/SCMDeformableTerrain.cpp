@@ -1232,18 +1232,16 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     // If enabled, update the extent of the moving patches (no ray-hit tests performed outside)
     if (m_moving_patch) {
-
         for (auto& p : m_patches) {
-            // GET THE LOC OF THE BODY???????
-
             ChVector<> center_abs = p.m_body->GetFrame_REF_to_abs().TransformPointLocalToParent(p.m_point);
             ChVector<> center_loc = plane.TransformPointParentToLocal(center_abs);
             p.m_min.x() = center_loc.x() - p.m_dim.x() / 2;
             p.m_min.y() = center_loc.y() - p.m_dim.y() / 2;
             p.m_max.x() = center_loc.x() + p.m_dim.x() / 2;
             p.m_max.y() = center_loc.y() + p.m_dim.y() / 2;
-
         }
+    }else {
+        UpdateFixedPatch();
     }
 
    
@@ -1297,7 +1295,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = 0.2*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = 0.8*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();
@@ -1335,18 +1333,18 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         p_hit_level[i] = 1e9;
 
         // Skip vertices outside any moving patch
-        if (m_moving_patch) {
-            bool outside = true;
-            for (auto& p : m_patches) {
+        
+        bool outside = true;
+        for (auto& p : m_patches) {
 
-                if (v.x() >= p.m_min.x() && v.x() <= p.m_max.x() && v.y() >= p.m_min.y() && v.y() <= p.m_max.y()) {
-                    outside = false;  // vertex in current patch
-                    break;            // stop checking further patches
-                }
+            if (v.x() >= p.m_min.x() && v.x() <= p.m_max.x() && v.y() >= p.m_min.y() && v.y() <= p.m_max.y()) {
+                outside = false;  // vertex in current patch
+                break;            // stop checking further patches
             }
-            if (outside)  // vertex outside all patches
-                continue;
         }
+        if (outside)  // vertex outside all patches
+            continue;
+    
 
         // Perform ray casting from current vertex
         collision::ChCollisionSystem::ChRayhitResult mrayhit_result;
@@ -1468,7 +1466,6 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             elastic_K = m_soil_fun->m_elastic_K;
             damping_R = m_soil_fun->m_damping_R;
         }
-        //std::cout<<"test point 12"<<std::endl;
 
         p_hit_level[i] = loc_point.z();
         double p_hit_offset = -p_hit_level[i] + p_level_initial[i];
@@ -1706,6 +1703,44 @@ void SCMDeformableSoilGrid::GetMesh(){
     m_grid_shape->GetVisMesh(m_trimesh_shape, plane, active_sub_mesh);
 }
 
+void SCMDeformableSoilGrid::UpdateFixedPatch(){
+    MovingPatchInfo pinfo;
+    
+    ChVector2<> p_min(+std::numeric_limits<double>::max());
+    ChVector2<> p_max(-std::numeric_limits<double>::max());
+
+    // Get current bounding box (AABB) of all collision shapes
+    ChVector<> aabb_min;
+    ChVector<> aabb_max;
+    GetSystem()->GetCollisionSystem()->GetBoundingBox(aabb_min, aabb_max);
+
+    // Loop over all corners of the AABB
+    for (int j = 0; j < 8; j++) {
+        int ix = j % 2;
+        int iy = (j / 2) % 2;
+        int iz = (j / 4);
+
+        // AABB corner in absolute frame
+        ChVector<> c_abs = aabb_max * ChVector<>(ix, iy, iz) + aabb_min * ChVector<>(1.0 - ix, 1.0 - iy, 1.0 - iz);
+        // AABB corner in SCM frame
+        ChVector<> c_scm = plane.TransformPointParentToLocal(c_abs);
+
+        // Update AABB of patch projection onto SCM plane
+        p_min.x() = std::min(p_min.x(), c_scm.x());
+        p_min.y() = std::min(p_min.y(), c_scm.y());
+        p_max.x() = std::max(p_max.x(), c_scm.x());
+        p_max.y() = std::max(p_max.y(), c_scm.y());
+
+        pinfo.m_max.x()=p_max.x();
+        pinfo.m_max.y()=p_max.y();
+        pinfo.m_min.x()=p_min.x();
+        pinfo.m_min.y()=p_min.y();
+        
+
+       m_patches.push_back(pinfo);
+    }
+}
+
 
 std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
                                     std::vector<double> y_cut, 
@@ -1720,7 +1755,6 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
         double sub_cen_y = (subMesh[i].ymin + subMesh[i].ymax) / 2;
 
         for(int j = 0; j<patches.size();j++){
-            
             double patch_cen_x = (patches[j].m_min.x() + patches[j].m_max.x()) / 2;
             double patch_cen_y = (patches[j].m_min.y() + patches[j].m_max.y()) / 2;
 

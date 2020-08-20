@@ -331,6 +331,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     // Get the terrain height below the specified location.
     double GetHeight(const ChVector<>& loc) const;
 
+    void UpdateFixedPatch();
+
     // Updates the forces and the geometry, at the beginning of each timestep
     virtual void Setup() override {
         this->ComputeInternalForces();

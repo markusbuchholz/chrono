@@ -36,14 +36,14 @@ const std::string out_dir = GetChronoOutputPath() + "SCM_DEF_SOIL";
 
 // Enable/disable adaptive mesh refinement
 bool enable_adaptive_refinement = true;
-double init_mesh_resolution = 0.1;
-double min_mesh_resolution = 0.04;
+double init_mesh_resolution = 0.2;
+double min_mesh_resolution = 0.08;
 
 // Enable/disable bulldozing effects
 bool enable_bulldozing = true;
 
 // Enable/disable moving patch feature
-bool enable_moving_patch = true;
+bool enable_moving_patch = false;
 
 // If true, use provided callback to change soil properties based on location
 bool var_params = true;
