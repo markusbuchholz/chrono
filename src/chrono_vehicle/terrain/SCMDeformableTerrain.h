@@ -92,6 +92,12 @@ class ChSubGridMeshConnected{
     std::vector<ChVector<int>> mesh_face;
 
 
+//----------------------------------------- NEW
+    std::vector<ChVector<>> vertices_vec;
+    std::vector<std::vector<int>> neighbour_map_vec;
+    std::vector<ChVector<int>> face_vec;
+
+
   public:
     void addGridElement(ChGridElement);
     void removeGridElement(int index);
@@ -101,11 +107,19 @@ class ChSubGridMeshConnected{
     std::vector<ChGridElement> getEleArr(){return eleArr;}
     std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
-    void Update(ChVector<double> org, ChVector<double> new_vec);
+    void Update(ChVector<double> new_vec, int idx);
     void Refine(ChVector<double> target_vertex);
     std::vector<ChVector<>> returnMeshVert();
     std::vector<ChVector<int>> returnMeshFace();
     void GetSubVisMesh(ChCoordsys<> plane);
+
+//--------------------------------------------------------
+    void InitVerNeighMap();
+    void InitAllVertices();
+
+    std::vector<std::vector<int>> getAllNeigh_vec();
+    std::vector<ChVector<double>> getAllVertices_vec();
+    std::vector<ChVector<int>> getAllFaces();
     
 
     double xmax;
@@ -133,9 +147,14 @@ class ChGridMeshConnected{
     void addSubGridData(ChSubGridMeshConnected subMesh);
     //std::shared_ptr<ChTriangleMeshShape> 
     void GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh,ChCoordsys<> plane, std::vector<int> active_sub_mesh);
-    void Update(ChVector<double> org, ChVector<double> new_vec, int submesh_idx);
+    void Update(ChVector<double> new_vec,int idx ,int submesh_idx);
     void Refine(ChVector<double> target_vertex, int submesh_idx);
     void InitializeMeshVis(ChCoordsys<> plane);
+
+
+    //------------------------
+    void InitializeSubNeighMap();
+    void InitSubAllVertices();
     
 
 

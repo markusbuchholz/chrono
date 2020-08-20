@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     my_system.Add(mrigidbody);
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
-    mrigidbody->SetPos(tire_center + ChVector<>(1, 0.3, 0));
+    mrigidbody->SetPos(tire_center + ChVector<>(1.5, 2, -3.5));
     //mrigidbody->SetPos(tire_center + ChVector<>(0, 0, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
     
     // Use either a regular grid:
     double length = 6;
-    double width = 2;
+    double width = 4;
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
@@ -220,8 +220,10 @@ int main(int argc, char* argv[]) {
     }
     // Optionally, enable moving patch feature (reduces number of ray casts)
     if (enable_moving_patch) {
-        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 4 * tire_rad, 4 * tire_rad);
+        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 3 * tire_rad, 3 * tire_rad);
     }
+
+
         
     // Set some visualization parameters: either with a texture, or with falsecolor plot, etc.
     ////mterrain.SetTexture(vehicle::GetDataFile("terrain/textures/grass.jpg"), 16, 16);
@@ -235,15 +237,17 @@ int main(int argc, char* argv[]) {
     ////mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_IS_TOUCHED, 0, 8);
     
     mterrain.GetMesh()->SetWireframe(true);
+
+    std::cout<<"test point 1"<<std::endl;
     // ==IMPORTANT!== Use this function for adding a ChIrrNodeAsset to all items
     application.AssetBindAll();
-
+    std::cout<<"test point 2"<<std::endl;
     // ==IMPORTANT!== Use this function for 'converting' into Irrlicht meshes the assets
     application.AssetUpdateAll();
-
+    std::cout<<"test point 3"<<std::endl;
     // Use shadows in realtime view
     application.AddShadowAll();
-
+    std::cout<<"test point 4"<<std::endl;
     //
     // THE SOFT-REAL-TIME CYCLE
     //
@@ -282,6 +286,7 @@ int main(int argc, char* argv[]) {
         application.DoStep();
         ChIrrTools::drawColorbar(0, 30000, "Pressure yield [Pa]", application.GetDevice(), 1180);
         application.EndScene();
+        //mterrain.PrintStepStatistics();
         
         //mterrain.PrintStepStatistics(std::cout);
     }
