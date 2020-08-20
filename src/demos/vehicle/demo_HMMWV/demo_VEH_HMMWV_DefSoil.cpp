@@ -56,12 +56,12 @@ using std::endl;
 
 // Dimensions
 double terrainHeight = 0;
-double terrainLength = 16.0;  // size in X direction
-double terrainWidth = 8.0;    // size in Y direction
+double terrainLength = 20.0;  // size in X direction
+double terrainWidth = 20.0;    // size in Y direction
 
 // Divisions (X and Y)
-int divLength = 128;
-int divWidth = 64;
+int divLength = 200;
+int divWidth = 200;
 
 // -----------------------------------------------------------------------------
 // Vehicle parameters
@@ -81,7 +81,7 @@ DrivelineType drive_type = DrivelineType::AWD;
 VisualizationType chassis_vis = VisualizationType::NONE;
 
 // Initial vehicle position and orientation
-ChVector<> initLoc(-5, -2, 0.6);
+ChVector<> initLoc(10, 10, 0.6);
 ChQuaternion<> initRot(1, 0, 0, 0);
 
 // Contact material properties
@@ -266,7 +266,7 @@ int main(int argc, char* argv[]) {
     ////terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE_YELD, 0, 30000.2);
     terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.1);
 
-    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth);
+    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,5,ChCoordsys<>());
 
     // ---------------------------------------
     // Create the vehicle Irrlicht application
