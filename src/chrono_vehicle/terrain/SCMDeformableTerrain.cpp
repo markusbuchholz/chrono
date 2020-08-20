@@ -1312,7 +1312,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // - cast ray and record result in a map (key: vertex index)
     // - initialize patch id to -1 (not set)
 
-    //std::cout<<"test point 1"<<std::endl;
+
     m_timer_ray_casting.start();
 
     struct HitRecord {
@@ -1325,7 +1325,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     for (int i = 0; i < vertices.size(); ++i) {
         //auto v = plane.TransformParentToLocal(vertices[i]);
         auto v = vertices[i];
-        //std::cout<<"test point 2"<<std::endl;
+
         // Initialize SCM quantities at current vertex
         p_sigma[i] = 0;
         p_sinkage_elastic[i] = 0;
@@ -1347,16 +1347,16 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             if (outside)  // vertex outside all patches
                 continue;
         }
-        //std::cout<<"test point 3"<<std::endl;
+
         // Perform ray casting from current vertex
         collision::ChCollisionSystem::ChRayhitResult mrayhit_result;
         //ChVector<> to = vertices[i] + N * test_high_offset;
         ChVector<> to = plane.TransformPointLocalToParent(vertices[i]+ChVector<>(0,0,1)*test_high_offset);
         ChVector<> from = to - N * test_low_offset;
-        //std::cout<<"test point 4"<<std::endl;
+
         this->GetSystem()->GetCollisionSystem()->RayHit(from, to, mrayhit_result);
         m_num_ray_casts++;
-        //std::cout<<"test point 5"<<std::endl;
+
         if (mrayhit_result.hit) {
             HitRecord record = {mrayhit_result.hitModel->GetContactable(), mrayhit_result.abs_hitPoint, -1};
             hits.insert(std::make_pair(i, record));
@@ -1364,7 +1364,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
     }
 
-    //std::cout<<"test point 6"<<std::endl;
+
     // this vector stores all original vertices
     std::vector<ChVector<double>> original_vertice_hit;
     //std::cout<<"hit_size: "<<hit_vertices_idx.size()<<std::endl;
@@ -1405,7 +1405,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             }
         }
     }
-    std::cout<<"test point 7"<<std::endl;
+    //std::cout<<"test point 7"<<std::endl;
     // Collect hit vertices assigned to each patch.
     struct PatchRecord {
         std::vector<ChVector2<>> points;  // points in patch (projected on reference plane)
@@ -1433,7 +1433,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             p.oob = p.perimeter / (2 * p.area);
         }
     }
-    std::cout<<"test point 8"<<std::endl;
+    //std::cout<<"test point 8"<<std::endl;
 
     // Initialize local values for the soil parameters
     double Bekker_Kphi = m_Bekker_Kphi;
@@ -1444,18 +1444,18 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     double Janosi_shear = m_Janosi_shear;
     double elastic_K = m_elastic_K;
     double damping_R = m_damping_R;
-    std::cout<<"test point 9"<<std::endl;
+    //std::cout<<"test point 9"<<std::endl;
     // Process only hit vertices
     for (auto& h : hits) {
         int i = h.first;
         ChContactable* contactable = h.second.contactable;
         const ChVector<>& abs_point = h.second.abs_point;
         int patch_id = h.second.patch_id;
-        std::cout<<"test point 10"<<std::endl;
+        //std::cout<<"test point 10"<<std::endl;
 
         auto loc_point = plane.TransformParentToLocal(abs_point);
         //auto loc_point = abs_point;
-        std::cout<<"test point 11"<<std::endl;
+        //std::cout<<"test point 11"<<std::endl;
         if (m_soil_fun) {
             m_soil_fun->Set(loc_point.x(), loc_point.y());
 
@@ -1468,7 +1468,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
             elastic_K = m_soil_fun->m_elastic_K;
             damping_R = m_soil_fun->m_damping_R;
         }
-        std::cout<<"test point 12"<<std::endl;
+        //std::cout<<"test point 12"<<std::endl;
 
         p_hit_level[i] = loc_point.z();
         double p_hit_offset = -p_hit_level[i] + p_level_initial[i];

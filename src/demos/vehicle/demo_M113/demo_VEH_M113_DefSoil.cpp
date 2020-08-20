@@ -41,7 +41,7 @@ using namespace chrono::vehicle::m113;
 // =============================================================================
 
 // Initial vehicle position
-ChVector<> initLoc(-5, 0, 1.1);
+ChVector<> initLoc(10, 10, 0.8);
 
 // Initial vehicle orientation
 ChQuaternion<> initRot(1, 0, 0, 0);
@@ -53,13 +53,12 @@ ChQuaternion<> initRot(1, 0, 0, 0);
 // Terrain dimensions
 double terrainHeight = 0;
 double terrainLength = 20.0;  // size in X direction
-double terrainWidth = 4.0;    // size in Y direction
+double terrainWidth = 20.0;    // size in Y direction
 int divLength = 160;          // initial number of divisions in X direction
-int divWidth = 32;            // initial number of divisions in Y direction
+int divWidth = 160;            // initial number of divisions in Y direction
 
 // Simulation step size
 double step_size = 1e-3;
-
 // Use MKL
 bool use_mkl = false;
 
@@ -67,7 +66,7 @@ bool use_mkl = false;
 double render_step_size = 1.0 / 50;  // FPS = 50
 
 // Point on chassis tracked by the camera
-ChVector<> trackPoint(-2.0, 0.0, 0.0);
+ChVector<> trackPoint(5, 5.0, 0.0);
 
 // Output directories
 const std::string out_dir = GetChronoOutputPath() + "M113_DEF_SOIL";
@@ -163,8 +162,9 @@ int main(int argc, char* argv[]) {
 
     terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE_YELD, 0, 30000.2);
     ////terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.15);
+    terrain.AddMovingPatch(vehicle.GetChassisBody(), ChVector<>(0, 0, 0), 10, 6);
 
-    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth);
+    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,5,ChCoordsys<>());
 
     AddFixedObstacles(vehicle.GetSystem());
     ////AddMovingObstacles(vehicle.GetSystem());
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
     app.SetSkyBox();
     app.AddTypicalLights(irr::core::vector3df(30.f, -30.f, 100.f), irr::core::vector3df(30.f, 50.f, 100.f), 250, 130);
     app.SetChaseCamera(trackPoint, 4.0, 1.0);
-    app.SetChaseCameraPosition(ChVector<>(-3, 4, 1.5));
+    app.SetChaseCameraPosition(ChVector<>(4.5, 4.5, 2));
     app.SetChaseCameraMultipliers(1e-4, 10);
     app.SetTimestep(step_size);
     app.AssetBindAll();
@@ -261,6 +261,9 @@ int main(int argc, char* argv[]) {
         // Advance simulation for one timestep for all modules
         driver.Advance(step_size);
         terrain.Advance(step_size);
+
+        terrain.PrintStepStatistics(std::cout);
+
         vehicle.Advance(step_size);
         app.Advance(step_size);
 
@@ -272,7 +275,7 @@ int main(int argc, char* argv[]) {
         // Execution time 
         double step_timing = vehicle.GetSystem()->GetTimerStep();
         total_timing += step_timing;
-        ////std::cout << step_number << " " << step_timing << " " << total_timing << std::endl;
+        std::cout << step_number << " " << step_timing << " " << total_timing << std::endl;
     }
 
     vehicle.WriteContacts("M113_contacts.out");
