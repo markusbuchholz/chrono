@@ -81,7 +81,7 @@ DrivelineType drive_type = DrivelineType::AWD;
 VisualizationType chassis_vis = VisualizationType::NONE;
 
 // Initial vehicle position and orientation
-ChVector<> initLoc(10, 10, 0.6);
+ChVector<> initLoc(10, 10, 0.3);
 ChQuaternion<> initRot(1, 0, 0, 0);
 
 // Contact material properties
@@ -94,7 +94,7 @@ float mu_t = 0.8f;
 // -----------------------------------------------------------------------------
 
 // Simulation step size
-double step_size = 3e-3;
+double step_size = 1e-3;
 
 // Time interval between two render frames (1/FPS)
 double render_step_size = 1.0 / 100;
@@ -127,10 +127,10 @@ class MyDriver : public ChDriver {
         if (eff_time < 0)
             return;
 
-        if (eff_time > 0.2)
-            m_throttle = 0.7;
+        if (eff_time > 0)
+            m_throttle = 0.95;
         else
-            m_throttle = 3.5 * eff_time;
+            m_throttle = 0.95;
 
         if (eff_time < 2)
             m_steering = 0;
@@ -268,6 +268,7 @@ int main(int argc, char* argv[]) {
 
     terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,5,ChCoordsys<>());
 
+    
     // ---------------------------------------
     // Create the vehicle Irrlicht application
     // ---------------------------------------
@@ -313,7 +314,7 @@ int main(int argc, char* argv[]) {
 
     while (app.GetDevice()->run()) {
         double time = system->GetChTime();
-
+        terrain.PrintStepStatistics(std::cout);
         if (step_number == 800) {
             std::cout << "\nstart timer at t = " << time << std::endl;
             timer.start();

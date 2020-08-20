@@ -1297,7 +1297,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = 0.4*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = 0.2*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();
