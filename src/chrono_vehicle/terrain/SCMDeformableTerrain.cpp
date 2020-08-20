@@ -1008,6 +1008,9 @@ void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY,
     m_ground->Initialize(Grid);
 
     m_ground->m_height = height;
+
+    m_ground->area_x = sizeX/divX;
+    m_ground->area_y = sizeY/divY;
 }
 
 
@@ -1328,7 +1331,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = 0.8*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = area_x*area_y*10*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();

@@ -410,6 +410,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     double plot_v_min;
     double plot_v_max;
 
+    double area_x;
+    double area_y;
 
     ChCoordsys<> plane;
     //PatchType m_type;
