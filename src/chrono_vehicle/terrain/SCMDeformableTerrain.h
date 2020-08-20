@@ -96,6 +96,7 @@ class ChSubGridMeshConnected{
     std::vector<ChVector<>> vertices_vec;
     std::vector<std::vector<int>> neighbour_map_vec;
     std::vector<ChVector<int>> face_vec;
+    std::vector<ChVector<>> colors_vec;
 
 
   public:
@@ -113,13 +114,17 @@ class ChSubGridMeshConnected{
     std::vector<ChVector<int>> returnMeshFace();
     void GetSubVisMesh(ChCoordsys<> plane);
 
+    void UpdateColor(ChVector<float> new_color, int idx);
+
 //--------------------------------------------------------
     void InitVerNeighMap();
     void InitAllVertices();
+    void InitVerColor();
 
     std::vector<std::vector<int>> getAllNeigh_vec();
     std::vector<ChVector<double>> getAllVertices_vec();
     std::vector<ChVector<int>> getAllFaces();
+    std::vector<ChVector<>> getAllColors_vec();
     
 
     double xmax;
@@ -152,9 +157,13 @@ class ChGridMeshConnected{
     void InitializeMeshVis(ChCoordsys<> plane);
 
 
+    void UpdateColor(ChVector<float> new_color,int idx ,int submesh_idx);
+
+
     //------------------------
     void InitializeSubNeighMap();
     void InitSubAllVertices();
+    void InitSubAllColors();
     
 
 

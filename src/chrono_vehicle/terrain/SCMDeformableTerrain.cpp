@@ -248,6 +248,10 @@ void ChSubGridMeshConnected::Update(ChVector<double> new_vec, int idx){
     
 }
 
+void ChSubGridMeshConnected::UpdateColor(ChVector<float> new_color, int idx){
+    colors_vec[idx] = new_color;
+}
+
 // This function performs first order refinement only
 void ChSubGridMeshConnected::Refine(ChVector<double> target_vertex){
     std::vector<ChGridElement> refine_ele;
@@ -357,6 +361,16 @@ int SearchSubVertexIdx(ChVector<> vertex, std::vector<ChVector<>> arr){
         }
     }
     return return_value;
+}
+
+void ChSubGridMeshConnected::InitVerColor(){
+    for(int i = 0; i<vertices_vec.size();i++){
+        colors_vec.push_back(ChVector<>(0.3f, 0.3f, 0.3f));
+    }
+}
+
+std::vector<ChVector<>> ChSubGridMeshConnected::getAllColors_vec(){
+    return colors_vec;
 }
 
 
@@ -619,6 +633,8 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
 
     InitSubAllVertices();
 
+    InitSubAllColors();
+
     InitializeSubNeighMap();
     
 }
@@ -626,6 +642,8 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
 void ChGridMeshConnected::addSubGridData(ChSubGridMeshConnected subMesh){
     subArr.push_back(subMesh);
 }
+
+
 
 
 std::vector<ChSubGridMeshConnected> ChGridMeshConnected::getSubGridData(){
@@ -640,6 +658,13 @@ void ChGridMeshConnected::InitializeSubNeighMap(){
         subArr[i].InitVerNeighMap();
     }
 
+}
+
+void ChGridMeshConnected::InitSubAllColors(){
+    for(int i = 0; i<subArr.size();i++){
+        std::cout<<"setting up color vis for i: "<<i<<std::endl;
+        subArr[i].InitVerColor();
+    }
 }
 
 void ChGridMeshConnected::InitSubAllVertices(){
@@ -711,16 +736,18 @@ void ChGridMeshConnected::GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimes
 ,std::vector<int> active_sub_mesh){
     std::vector<ChVector<int>>& idx_vertices = trimesh->GetMesh()->getIndicesVertexes();
     std::vector<ChVector<>>& vertices = trimesh->GetMesh()->getCoordsVertices();
+    std::vector<ChVector<float>>& colors = trimesh->GetMesh()->getCoordsColors();
 
     idx_vertices.clear();
     vertices.clear();
-
+    colors.clear();
     
     int idx_size_ind = 0;
 
     
     for(int i = 0; i<subArr.size();i++){
         std::vector<ChVector<>> ver_buff = subArr[i].getAllVertices_vec();
+        std::vector<ChVector<>> color_buff = subArr[i].getAllColors_vec();
         std::vector<ChVector<int>> face_buff = subArr[i].getAllFaces();
 
         for(int a = 0; a<ver_buff.size();a++){
@@ -736,6 +763,8 @@ void ChGridMeshConnected::GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimes
         }
 
         idx_vertices.insert(idx_vertices.end(),face_buff.begin(),face_buff.end());
+
+        colors.insert(colors.end(),color_buff.begin(),color_buff.end());
 
         idx_size_ind = vertices.size();
 
@@ -770,6 +799,10 @@ void ChGridMeshConnected::Update(ChVector<double> new_vec,int idx ,int submesh_i
         subArr[submesh_idx].Update(new_vec, idx);
         //std::cout<<"old: "<<org<<" new: "<<new_vec<<std::endl;
     //}
+}
+
+void ChGridMeshConnected::UpdateColor(ChVector<float> new_color,int idx ,int submesh_idx){
+    subArr[submesh_idx].UpdateColor(new_color, idx);
 }
 
 void ChGridMeshConnected::Refine(ChVector<double> target_vertex, int submesh_idx){
@@ -1577,7 +1610,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     m_timer_ray_casting.stop();
 
 
-    m_timer_update.start();
+
     // -----------------------------------------------
     // store all updated hit vertices
     // -----------------------------------------------
@@ -1596,29 +1629,13 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // ----------------------------------------------
 
 
-    for(int i = 0; i<active_sub_mesh.size(); i++){
-        for(int j = 0; j<hit_vertices_idx.size();j++){
 
-            if(hit_vertices_idx[j]<=activeSubMesh_size_buffer[i]){
-                if(i==0){
-                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j],active_sub_mesh[i]);
-                }else{
-                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j]-activeSubMesh_size_buffer[i-1]-1,active_sub_mesh[i]);
-                }
-                
-                hit_vertices_idx.erase(hit_vertices_idx.begin()+j);
-                original_vertice_hit.erase(original_vertice_hit.begin()+j);
-                processed_vertices_hit.erase(processed_vertices_hit.begin()+j);
-                j = j-1;
-            }
-        }
-    }
 
 
 
     
 
-    m_timer_update.stop();
+
 
     
     m_timer_visualization.start();
@@ -1631,7 +1648,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     m_trimesh_shape->SetWireframe(true);
 
 
-    m_timer_visualization.stop();
+   
     // ----------------------------------------------
     // ----------------------------------------------
 
@@ -1639,12 +1656,97 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // Update the visualization colors
     //
 
+    std::vector<ChVector<float>> colors; 
+
+    if (plot_type != SCMDeformableTerrain::PLOT_NONE) {
+        colors.resize(hit_vertices_idx.size());
+        for (size_t iv = 0; iv < hit_vertices_idx.size(); ++iv) {
+            ChColor mcolor;
+            switch (plot_type) {
+                case SCMDeformableTerrain::PLOT_LEVEL:
+                    mcolor = ChColor::ComputeFalseColor(p_level[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_LEVEL_INITIAL:
+                    mcolor = ChColor::ComputeFalseColor(p_level_initial[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_SINKAGE:
+                    mcolor = ChColor::ComputeFalseColor(p_sinkage[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_SINKAGE_ELASTIC:
+                    mcolor = ChColor::ComputeFalseColor(p_sinkage_elastic[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_SINKAGE_PLASTIC:
+                    mcolor = ChColor::ComputeFalseColor(p_sinkage_plastic[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_STEP_PLASTIC_FLOW:
+                    mcolor = ChColor::ComputeFalseColor(p_step_plastic_flow[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_K_JANOSI:
+                    mcolor = ChColor::ComputeFalseColor(p_kshear[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_PRESSURE:
+                    mcolor = ChColor::ComputeFalseColor(p_sigma[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_PRESSURE_YELD:
+                    mcolor = ChColor::ComputeFalseColor(p_sigma_yeld[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_SHEAR:
+                    mcolor = ChColor::ComputeFalseColor(p_tau[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_MASSREMAINDER:
+                    mcolor = ChColor::ComputeFalseColor(p_massremainder[hit_vertices_idx[iv]], plot_v_min, plot_v_max);
+                    break;
+                case SCMDeformableTerrain::PLOT_ISLAND_ID:
+                    mcolor = ChColor(0, 0, 1);
+                    if (p_erosion[hit_vertices_idx[iv]] == true)
+                        mcolor = ChColor(1, 1, 1);
+                    if (p_id_island[hit_vertices_idx[iv]] > 0)
+                        mcolor = ChColor::ComputeFalseColor(4.0 + (p_id_island[hit_vertices_idx[iv]] % 8), 0.0, 12.0);
+                    if (p_id_island[hit_vertices_idx[iv]] < 0)
+                        mcolor = ChColor(0, 0, 0);
+                    break;
+                case SCMDeformableTerrain::PLOT_IS_TOUCHED:
+                    if (p_sigma[hit_vertices_idx[iv]] > 0)
+                        mcolor = ChColor(1, 0, 0);
+                    else
+                        mcolor = ChColor(0, 0, 1);
+                    break;
+            }
+            colors[iv] = {mcolor.R, mcolor.G, mcolor.B};
+        }
+    } else {
+        colors.clear();
+    }
+
+
+    for(int i = 0; i<active_sub_mesh.size(); i++){
+        for(int j = 0; j<hit_vertices_idx.size();j++){
+
+            if(hit_vertices_idx[j]<=activeSubMesh_size_buffer[i]){
+                if(i==0){
+                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j],active_sub_mesh[i]);
+                }else{
+                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j]-activeSubMesh_size_buffer[i-1]-1,active_sub_mesh[i]);
+                }
+
+                if(i==0){
+                    m_grid_shape->UpdateColor(colors[j],hit_vertices_idx[j],active_sub_mesh[i]);
+                }else{
+                    m_grid_shape->UpdateColor(colors[j],hit_vertices_idx[j]-activeSubMesh_size_buffer[i-1]-1,active_sub_mesh[i]);
+                }
+                
+                hit_vertices_idx.erase(hit_vertices_idx.begin()+j);
+                original_vertice_hit.erase(original_vertice_hit.begin()+j);
+                processed_vertices_hit.erase(processed_vertices_hit.begin()+j);
+                colors.erase(colors.begin()+j);
+                j = j-1;
+            }
+        }
+    }
 
 
 
-
-
-
+    m_timer_visualization.stop();
 
     // ----------------------------------------------
     // Rectangular Mesh Refinement
