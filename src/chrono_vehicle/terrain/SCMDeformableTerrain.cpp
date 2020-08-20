@@ -536,7 +536,7 @@ bool checkRepeat(ChVector<double> a, std::vector<ChVector<double>> arr){
 //==============================================================================
 void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, int sub_on_side){
 
-    std::cout<<"subonside init: "<<sub_on_side<<std::endl;
+    int total_sub = sub_on_side * sub_on_side;
     double x_max=-999.;
     double x_min=999.;
     double y_max=-999.;
@@ -585,6 +585,7 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
     std::vector<double> x_cut;
     std::vector<double> y_cut;
 
+
     for(int i = 0; i<sub_on_side; i++){
         x_cut.push_back(x_min+(x_tot_dis/sub_on_side)*(i+1));
         y_cut.push_back(y_min+(y_tot_dis/sub_on_side)*(i+1));
@@ -606,6 +607,7 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
                 }
                
             }
+            std::cout<<"Preprocessing SubMesh: "<<subArr.size()<<" total Submesh: "<<total_sub<<std::endl;
             addSubGridData(subTemp);
         }
     }
@@ -630,6 +632,7 @@ std::vector<ChSubGridMeshConnected> ChGridMeshConnected::getSubGridData(){
 
 void ChGridMeshConnected::InitializeSubNeighMap(){
     for(int i = 0; i<subArr.size();i++){
+        std::cout<<"setting up neighbour map for i: "<<i<<std::endl;
         subArr[i].InitVerNeighMap();
     }
 
@@ -637,6 +640,7 @@ void ChGridMeshConnected::InitializeSubNeighMap(){
 
 void ChGridMeshConnected::InitSubAllVertices(){
     for(int i = 0; i<subArr.size();i++){
+        std::cout<<"setting up vertices for i: "<<i<<std::endl;
         subArr[i].InitAllVertices();
     }
 }
@@ -1097,7 +1101,10 @@ void SCMDeformableTerrain::PrintStepStatistics(std::ostream& os) const {
         os << "   Refinements:             " << m_ground->m_timer_refinement() << std::endl;
     if (m_ground->do_bulldozing)
         os << "   Bulldozing:              " << m_ground->m_timer_bulldozing() << std::endl;
+    os << "   Vertices Setup:           " << m_ground->m_timer_vertsetup() << std::endl;
     os << "   Visualization:           " << m_ground->m_timer_visualization() << std::endl;
+    os << "   Update Time:           " << m_ground->m_timer_update() << std::endl;
+    os << "   Total Time:           " << m_ground->m_timer_total() << std::endl;
 
     os << " Counters:" << std::endl;
     os << "   Number vertices:         " << m_ground->m_num_vertices << std::endl;
@@ -1202,9 +1209,17 @@ void SCMDeformableSoilGrid::Initialize(std::shared_ptr<ChGridMeshConnected> Grid
 void SCMDeformableSoilGrid::ComputeInternalForces(){
     m_timer_calc_areas.reset();
     m_timer_ray_casting.reset();
+    m_timer_update.reset();
     m_timer_refinement.reset();
     m_timer_bulldozing.reset();
     m_timer_visualization.reset();
+    m_timer_total.reset();
+    m_timer_vertsetup.reset();
+
+
+
+
+    m_timer_total.start();
 
 
 
@@ -1227,6 +1242,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
     }
 
+    m_timer_vertsetup.start();
+
     // Update Active SubMesh indexes
     std::vector<ChSubGridMeshConnected> subMesh= m_grid_shape->getSubGridData();
 
@@ -1241,7 +1258,6 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     //std::cout<<"active_sub_mesh_length after: "<<active_sub_mesh.size()<<std::endl;
 
     std::vector<int> activeSubMesh_size_buffer;
-    std::cout<<"test point 1"<<std::endl;
 
    // Get all vertices from active sub-mesh
     vertices.clear();
@@ -1265,13 +1281,17 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         neigh_size_ind = vertices.size();
     }
 
+    std::cout<<"vertices size: "<<vertices.size()<<std::endl;
+
+    m_timer_vertsetup.stop();
+
 
 
     SetupAuxData();
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = 0.08*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = 0.4*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
     }
 
     // Confirm how to structure this ?????
@@ -1283,6 +1303,9 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // - skip vertices outside moving patch (if option enabled)
     // - cast ray and record result in a map (key: vertex index)
     // - initialize patch id to -1 (not set)
+
+
+    m_timer_ray_casting.start();
 
     struct HitRecord {
         ChContactable* contactable;  // pointer to hit object
@@ -1340,7 +1363,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     for (int i = 0; i<hit_vertices_idx.size();i++){
         original_vertice_hit.push_back(vertices[hit_vertices_idx[i]]);
     }
- 
+    
 
 
    // Loop through all hit vertices and determine to which contact patch they belong.
@@ -1545,6 +1568,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     }  // end loop on ray hits
     m_timer_ray_casting.stop();
 
+
+    m_timer_update.start();
     // -----------------------------------------------
     // store all updated hit vertices
     // -----------------------------------------------
@@ -1562,28 +1587,15 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // update the Grid data structure
     // ----------------------------------------------
 
-    //std::cout<<"original size: "<<original_vertice_hit.size()<<std::endl;
-    //std::cout<<"processl size: "<<processed_vertices_hit.size()<<std::endl;
-
-
-    for(int i = 0; i<hit_vertices_idx.size();i++){
-        std::cout<<"hit idx: "<<hit_vertices_idx[i]<<std::endl;
-    }
-
-    for(int i = 0; i<hit_vertices_idx.size();i++){
-        std::cout<<"org: "<<original_vertice_hit[i]<<" new: "<<processed_vertices_hit[i]<<std::endl;
-    }
 
     for(int i = 0; i<active_sub_mesh.size(); i++){
         for(int j = 0; j<hit_vertices_idx.size();j++){
 
             if(hit_vertices_idx[j]<=activeSubMesh_size_buffer[i]){
-                std::cout<<"345 orginal: "<<original_vertice_hit[j]<<std::endl;
-                std::cout<<"345 new: "<<processed_vertices_hit[j]<<std::endl;
                 if(i==0){
                     m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j],active_sub_mesh[i]);
                 }else{
-                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j]-activeSubMesh_size_buffer[i-1],active_sub_mesh[i]);
+                    m_grid_shape->Update(processed_vertices_hit[j],hit_vertices_idx[j]-activeSubMesh_size_buffer[i-1]-1,active_sub_mesh[i]);
                 }
                 
                 hit_vertices_idx.erase(hit_vertices_idx.begin()+j);
@@ -1598,9 +1610,10 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     
 
-
+    m_timer_update.stop();
 
     
+    m_timer_visualization.start();
     // Create the default mesh asset
     m_color = std::shared_ptr<ChColorAsset>(new ChColorAsset);
     m_color->SetColor(ChColor(0.3f, 0.3f, 0.3f));
@@ -1608,6 +1621,9 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     GetMesh();
     this->AddAsset(m_trimesh_shape);
     m_trimesh_shape->SetWireframe(true);
+
+
+    m_timer_visualization.stop();
     // ----------------------------------------------
     // ----------------------------------------------
 
@@ -1644,7 +1660,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // ----------------------------------------------
 
 
-
+m_timer_total.stop();
 
 }
 
@@ -1686,7 +1702,6 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
                                     std::vector<SCMDeformableSoilGrid::MovingPatchInfo> patches){
     std::vector<int> returnBuffer;
 
-    std::cout<<"Find in"<<std::endl;
 
     for(int i = 0; i<subMesh.size();i++){
         subMesh[i].getBoundingInfo();
@@ -1695,10 +1710,18 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
             
             double patch_cen_x = (patches[j].m_min.x() + patches[j].m_max.x()) / 2;
             double patch_cen_y = (patches[j].m_min.y() + patches[j].m_max.y()) / 2;
+            double sub_cen_x = (subMesh[i].xmin + subMesh[i].xmax) / 2;
+            double sub_cen_y = (subMesh[i].ymin + subMesh[i].ymax) / 2;
 
             if(patch_cen_x > subMesh[i].xmin && patch_cen_x <subMesh[i].xmax && patch_cen_y > subMesh[i].ymin && patch_cen_y < subMesh[i].ymax)
             {
-                std::cout<<"Find ok"<<std::endl;
+                if(CheckIdxRepeat(i,returnBuffer)==false){
+                    returnBuffer.push_back(i);
+                }
+            }
+
+            if(sub_cen_x > patches[j].m_min.x() && sub_cen_x <patches[j].m_max.x() && sub_cen_y > patches[j].m_min.y() && sub_cen_y < patches[j].m_max.y())
+            {
                 if(CheckIdxRepeat(i,returnBuffer)==false){
                     returnBuffer.push_back(i);
                 }
@@ -1737,6 +1760,39 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
 
             if(patches[j].m_min.x()<subMesh[i].xmin  && patches[j].m_max.x()>subMesh[i].xmax){
                 if(patches[j].m_min.y()<subMesh[i].ymin  && patches[j].m_max.y()>subMesh[i].ymax){
+                    if(CheckIdxRepeat(i,returnBuffer)==false){
+                        returnBuffer.push_back(i);
+                    }
+                }
+            }
+
+            if(patches[j].m_max.y()>subMesh[i].ymax  && patches[j].m_min.y()<subMesh[i].ymin){
+                if(subMesh[i].xmin<patches[j].m_min.x()  && subMesh[i].xmax>patches[j].m_min.x()){
+                    if(CheckIdxRepeat(i,returnBuffer)==false){
+                        returnBuffer.push_back(i);
+                    }
+                }
+            }
+
+            if(patches[j].m_max.y()>subMesh[i].ymax  && patches[j].m_min.y()<subMesh[i].ymin){
+                if(subMesh[i].xmin<patches[j].m_max.x()  && subMesh[i].xmax>patches[j].m_max.x()){
+                    if(CheckIdxRepeat(i,returnBuffer)==false){
+                        returnBuffer.push_back(i);
+                    }
+                }
+            }
+
+
+            if(patches[j].m_max.x()>subMesh[i].xmax  && patches[j].m_min.x()<subMesh[i].xmin){
+                if(subMesh[i].ymin<patches[j].m_max.y()  && subMesh[i].ymax>patches[j].m_max.y()){
+                    if(CheckIdxRepeat(i,returnBuffer)==false){
+                        returnBuffer.push_back(i);
+                    }
+                }
+            }
+
+            if(patches[j].m_max.x()>subMesh[i].xmax  && patches[j].m_min.x()<subMesh[i].xmin){
+                if(subMesh[i].ymin<patches[j].m_min.y()  && subMesh[i].ymax>patches[j].m_min.y()){
                     if(CheckIdxRepeat(i,returnBuffer)==false){
                         returnBuffer.push_back(i);
                     }

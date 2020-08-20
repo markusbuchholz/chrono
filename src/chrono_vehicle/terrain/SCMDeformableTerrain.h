@@ -433,9 +433,13 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     // Timers and counters
     ChTimer<double> m_timer_calc_areas;
     ChTimer<double> m_timer_ray_casting;
+    ChTimer<double> m_timer_update;
     ChTimer<double> m_timer_refinement;
     ChTimer<double> m_timer_bulldozing;
     ChTimer<double> m_timer_visualization;
+    ChTimer<double> m_timer_total;
+    ChTimer<double> m_timer_vertsetup;
+    
     size_t m_num_vertices;
     size_t m_num_faces;
     size_t m_num_ray_casts;
