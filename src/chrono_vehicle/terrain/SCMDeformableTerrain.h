@@ -151,7 +151,7 @@ class ChGridMeshConnected{
     void getBoundingInfo();
     void addSubGridData(ChSubGridMeshConnected subMesh);
     //std::shared_ptr<ChTriangleMeshShape> 
-    void GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh,ChCoordsys<> plane, std::vector<int> active_sub_mesh);
+    void GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh,ChCoordsys<> plane, std::vector<int> active_sub_mesh,std::vector<int> vis_index);
     void Update(ChVector<double> new_vec,int idx ,int submesh_idx);
     void Refine(ChVector<double> target_vertex, int submesh_idx);
     void InitializeMeshVis(ChCoordsys<> plane);
@@ -181,6 +181,9 @@ class ChGridMeshConnected{
 
     std::vector<double> x_cut_Arr;
     std::vector<double> y_cut_Arr;
+
+
+
 };
 
 
@@ -455,7 +458,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
 
 
-
+    // this vector stores the index cut data for mesh visualization
+    std::vector<int> vis_index;
 
 
 

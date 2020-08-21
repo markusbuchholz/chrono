@@ -54,8 +54,8 @@ ChQuaternion<> initRot(1, 0, 0, 0);
 double terrainHeight = 0;
 double terrainLength = 20.0;  // size in X direction
 double terrainWidth = 20.0;    // size in Y direction
-int divLength = 160;          // initial number of divisions in X direction
-int divWidth = 160;            // initial number of divisions in Y direction
+int divLength = 130;          // initial number of divisions in X direction
+int divWidth = 130;            // initial number of divisions in Y direction
 
 // Simulation step size
 double step_size = 1e-3;

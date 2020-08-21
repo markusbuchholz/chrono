@@ -636,7 +636,7 @@ void ChGridMeshConnected::initializeData(std::vector<ChGridElement> grid_ele, in
     InitSubAllColors();
 
     InitializeSubNeighMap();
-    
+ 
 }
 
 void ChGridMeshConnected::addSubGridData(ChSubGridMeshConnected subMesh){
@@ -733,40 +733,33 @@ void ChGridMeshConnected::getBoundingInfo(){
 
 
 void ChGridMeshConnected::GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh, ChCoordsys<> plane
-,std::vector<int> active_sub_mesh){
+,std::vector<int> active_sub_mesh, std::vector<int> vis_index){
     std::vector<ChVector<int>>& idx_vertices = trimesh->GetMesh()->getIndicesVertexes();
     std::vector<ChVector<>>& vertices = trimesh->GetMesh()->getCoordsVertices();
     std::vector<ChVector<float>>& colors = trimesh->GetMesh()->getCoordsColors();
 
-    idx_vertices.clear();
-    vertices.clear();
-    colors.clear();
-    
-    int idx_size_ind = 0;
-
-    
-    for(int i = 0; i<subArr.size();i++){
-        std::vector<ChVector<>> ver_buff = subArr[i].getAllVertices_vec();
-        std::vector<ChVector<>> color_buff = subArr[i].getAllColors_vec();
-        std::vector<ChVector<int>> face_buff = subArr[i].getAllFaces();
+    for(int i = 0; i<active_sub_mesh.size();i++){
+        std::vector<ChVector<>> ver_buff = subArr[active_sub_mesh[i]].getAllVertices_vec();
+        std::vector<ChVector<>> color_buff = subArr[active_sub_mesh[i]].getAllColors_vec();
+        std::vector<ChVector<int>> face_buff = subArr[active_sub_mesh[i]].getAllFaces();
 
         for(int a = 0; a<ver_buff.size();a++){
             ver_buff[a] = plane.TransformPointLocalToParent(ver_buff[a]);
         }
 
-        vertices.insert(vertices.end(),ver_buff.begin(),ver_buff.end());
+        std::copy(ver_buff.begin(),ver_buff.end(),vertices.begin()+vis_index[active_sub_mesh[i]]);
 
-        for(int a = 0; a<face_buff.size();a++){
-            face_buff[a].x() = face_buff[a].x() + idx_size_ind;
-            face_buff[a].y() = face_buff[a].y() + idx_size_ind;
-            face_buff[a].z() = face_buff[a].z() + idx_size_ind;
-        }
+        //for(int a = 0; a<face_buff.size();a++){
+        //    face_buff[a].x() = face_buff[a].x() + idx_size_ind;
+        //    face_buff[a].y() = face_buff[a].y() + idx_size_ind;
+        //    face_buff[a].z() = face_buff[a].z() + idx_size_ind;
+        //}
 
-        idx_vertices.insert(idx_vertices.end(),face_buff.begin(),face_buff.end());
+        //idx_vertices.insert(idx_vertices.end(),face_buff.begin(),face_buff.end());
 
-        colors.insert(colors.end(),color_buff.begin(),color_buff.end());
+        std::copy(color_buff.begin(),color_buff.end(),colors.begin()+vis_index[active_sub_mesh[i]]);
 
-        idx_size_ind = vertices.size();
+        //idx_size_ind = vertices.size();
 
     }
     
@@ -997,14 +990,16 @@ void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY,
             temp_store_buffer.push_back(ChGridElement(p1, p2, p3, p4,n));
         }
     }
+    
 
     Grid->initializeData(temp_store_buffer, sub_per_side);
-
     
 
     Grid->InitializeMeshVis(plane);
 
     m_ground->Initialize(Grid);
+
+    
 
     m_ground->m_height = height;
 
@@ -1015,6 +1010,8 @@ void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY,
     m_ground->dy_findactive = sizeY/sub_per_side;
     m_ground->dside_findactive = sub_per_side;
     m_ground->tot_findactive = sub_per_side * sub_per_side;
+
+    
     
 }
 
@@ -1023,9 +1020,13 @@ void SCMDeformableTerrain::Initialize(const std::string& mesh_file, int sub_per_
 {
     GridMeshLoader test;
     std::vector<ChGridElement> result = test.loadObj(mesh_file);
-    Grid->initializeData(result, sub_per_side);
+    std::shared_ptr<ChTriangleMeshShape> mesh_ptr_buff = GetMesh();
+
+    
 
     SetPlane(plane);
+
+    Grid->initializeData(result, sub_per_side);
     
     m_ground->Initialize(Grid);
 }
@@ -1257,6 +1258,50 @@ SCMDeformableSoilGrid::SCMDeformableSoilGrid(ChSystem* system, bool visualizatio
 
 void SCMDeformableSoilGrid::Initialize(std::shared_ptr<ChGridMeshConnected> Grid){
     m_grid_shape = Grid;
+
+    // update mesh visualization data
+    std::vector<ChVector<int>>& idx_vertices = m_trimesh_shape->GetMesh()->getIndicesVertexes();
+    std::vector<ChVector<>>& vertices = m_trimesh_shape->GetMesh()->getCoordsVertices();
+    std::vector<ChVector<float>>& colors = m_trimesh_shape->GetMesh()->getCoordsColors();
+
+    idx_vertices.clear();
+    vertices.clear();
+    colors.clear();
+    vis_index.clear();
+    
+    int idx_size_ind = 0;
+    vis_index.push_back(idx_size_ind);
+    
+
+    std::vector<ChSubGridMeshConnected>* subArr = m_grid_shape->getSubArrAddress();
+
+    
+    for(int i = 0; i<subArr->size();i++){
+        std::vector<ChVector<>> ver_buff = subArr->at(i).getAllVertices_vec();
+        std::vector<ChVector<>> color_buff = subArr->at(i).getAllColors_vec();
+        std::vector<ChVector<int>> face_buff = subArr->at(i).getAllFaces();
+
+        for(int a = 0; a<ver_buff.size();a++){
+            ver_buff[a] = plane.TransformPointLocalToParent(ver_buff[a]);
+        }
+
+        vertices.insert(vertices.end(),ver_buff.begin(),ver_buff.end());
+
+        for(int a = 0; a<face_buff.size();a++){
+            face_buff[a].x() = face_buff[a].x() + idx_size_ind;
+            face_buff[a].y() = face_buff[a].y() + idx_size_ind;
+            face_buff[a].z() = face_buff[a].z() + idx_size_ind;
+        }
+
+        idx_vertices.insert(idx_vertices.end(),face_buff.begin(),face_buff.end());
+
+        colors.insert(colors.end(),color_buff.begin(),color_buff.end());
+
+        idx_size_ind = vertices.size();
+
+        vis_index.push_back(idx_size_ind);
+
+    }
 }
 
 
@@ -1351,8 +1396,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = area_x*area_y*12*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)
-        *(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0); //need an api to get uniform area???????
+        p_area[i] = area_x*area_y*15*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();
@@ -1830,7 +1874,7 @@ void SCMDeformableSoilGrid::SetupAuxData(){
 }
 
 void SCMDeformableSoilGrid::GetMesh(){
-    m_grid_shape->GetVisMesh(m_trimesh_shape, plane, active_sub_mesh);
+    m_grid_shape->GetVisMesh(m_trimesh_shape, plane, active_sub_mesh,vis_index);
 }
 
 void SCMDeformableSoilGrid::UpdateFixedPatch(){
