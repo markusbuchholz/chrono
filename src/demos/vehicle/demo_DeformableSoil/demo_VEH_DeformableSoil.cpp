@@ -36,14 +36,14 @@ const std::string out_dir = GetChronoOutputPath() + "SCM_DEF_SOIL";
 
 // Enable/disable adaptive mesh refinement
 bool enable_adaptive_refinement = true;
-double init_mesh_resolution = 0.2;
-double min_mesh_resolution = 0.08;
+double init_mesh_resolution = 0.1;
+double min_mesh_resolution = 0.04;
 
 // Enable/disable bulldozing effects
 bool enable_bulldozing = true;
 
 // Enable/disable moving patch feature
-bool enable_moving_patch = false;
+bool enable_moving_patch = true;
 
 // If true, use provided callback to change soil properties based on location
 bool var_params = true;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     my_system.Add(mrigidbody);
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
-    mrigidbody->SetPos(tire_center + ChVector<>(3, 2, -20));
+    mrigidbody->SetPos(tire_center + ChVector<>(3, 2, -15));
     //mrigidbody->SetPos(tire_center + ChVector<>(0, 0, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
     // Initialize the geometry of the soil
     
     // Use either a regular grid:
-    double length = 30;
-    double width = 20;
+    double length = 40;
+    double width = 16;
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
         my_system.SetTimestepperType(ChTimestepper::Type::EULER_IMPLICIT);
     */
 
-    application.SetTimestep(0.005);
+    application.SetTimestep(0.002);
     ///////////////// TEST /////////////////////////////
     //std::vector<ChVector<>> buffer = mterrain.returnVertices();
     //for(int i = 0; i<buffer.size();i++){

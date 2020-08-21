@@ -435,6 +435,19 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
     double last_t;  // for optimization
 
+
+
+
+    //this is the parmeter for findActiveIdx
+    
+
+
+
+
+
+
+
+
     // Moving patch parameters
  
     std::vector<MovingPatchInfo> m_patches;  // set of active moving patches

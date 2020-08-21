@@ -1109,8 +1109,16 @@ void SCMDeformableTerrain::AddMovingPatch(std::shared_ptr<ChBody> body,
 
     m_ground->m_patches.push_back(pinfo);
 
+
+
     // Moving patch monitoring is now enabled
     m_ground->m_moving_patch = true;
+
+
+
+
+    // Pre cal some information
+
 }
 
 // MIGHT NEED TO BE REMOVED?
@@ -1291,10 +1299,10 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     // indexes of submesh(es) which are active
     active_sub_mesh.clear();
-    m_timer_vertsetup.start();
+    
     //std::cout<<"active_sub_mesh_length: "<<active_sub_mesh.size()<<std::endl;
     active_sub_mesh = FindActiveSubMeshIdx(x_cut, y_cut, subMesh, m_patches);
-    m_timer_vertsetup.stop();
+    
     //std::cout<<"active_sub_mesh_length after: "<<active_sub_mesh.size()<<std::endl;
     
     std::vector<int> activeSubMesh_size_buffer;
@@ -1303,6 +1311,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     vertices.clear();
     //std::cout<<"vertices size before add: "<<vertices.size()<<std::endl;
     int neigh_size_ind = 0;
+    m_timer_vertsetup.start();
     std::vector<std::vector<int>> vertices_connection;
     for(int i = 0; i < active_sub_mesh.size(); i++){
         std::vector<ChVector<>> sub_vertices = subMesh[active_sub_mesh[i]].getAllVertices_vec(); 
@@ -1323,7 +1332,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     std::cout<<"vertices size: "<<vertices.size()<<std::endl;
 
-    
+    m_timer_vertsetup.stop();
 
 
     m_timer_calc_areas.start();
@@ -1619,6 +1628,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // -----------------------------------------------
     //std::cout<<"processed size: "<<hit_vertices_idx.size()<<std::endl;
 
+    m_timer_update.start();
+
     std::vector<ChVector<double>> processed_vertices_hit;
 
     for (int i = 0; i<hit_vertices_idx.size();i++){
@@ -1747,7 +1758,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         }
     }
 
-
+    m_timer_update.stop();
 
     m_timer_visualization.stop();
 
@@ -1854,6 +1865,13 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
     std::vector<int> returnBuffer;
 
 
+
+
+
+
+
+
+    
     for(int i = 0; i<subMesh.size();i++){
         
         double sub_cen_x = (subMesh[i].xmin + subMesh[i].xmax) / 2;
@@ -1956,6 +1974,7 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
             }
         }
     }
+    
 
     
 
