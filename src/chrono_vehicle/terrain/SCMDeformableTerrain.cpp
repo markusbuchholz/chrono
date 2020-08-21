@@ -958,7 +958,6 @@ std::vector<std::string> split(std::string stringToBeSplitted, std::string delim
 // which are the indexes of active submesh
 std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
                                     std::vector<double> y_cut, 
-                                    std::vector<ChSubGridMeshConnected> subMesh,
                                     std::vector<std::vector<chrono::vehicle::SCMDeformableSoilGrid::MovingPatchInfo>
 >patches);
 
@@ -1011,6 +1010,12 @@ void SCMDeformableTerrain::Initialize(double height, double sizeX, double sizeY,
 
     m_ground->area_x = sizeX/divX;
     m_ground->area_y = sizeY/divY;
+
+    m_ground->dx_findactive = sizeX/sub_per_side;
+    m_ground->dy_findactive = sizeY/sub_per_side;
+    m_ground->dside_findactive = sub_per_side;
+    m_ground->tot_findactive = sub_per_side * sub_per_side;
+    
 }
 
 
@@ -1143,6 +1148,8 @@ void SCMDeformableTerrain::SetPlane(ChCoordsys<> mplane) {
 
 void SCMDeformableTerrain::PrintStepStatistics(std::ostream& os) const {
     os << " Timers:" << std::endl;
+    
+    os << "   load list and patch:         " << m_ground->m_timer_loadlist() << std::endl;
     os << "   Calculate areas:         " << m_ground->m_timer_calc_areas() << std::endl;
     os << "   Ray casting:             " << m_ground->m_timer_ray_casting() << std::endl;
     if (m_ground->do_refinement)
@@ -1191,7 +1198,6 @@ void SCMDeformableTerrain::SetColor(ChColor color) {
 
 std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
                                     std::vector<double> y_cut, 
-                                    std::vector<ChSubGridMeshConnected> subMesh,
                                     std::vector<SCMDeformableSoilGrid::MovingPatchInfo> patches);
 
 bool checkRepeatVertices(ChVector<> v_temp, std::vector<ChVector<>> arr_temp);
@@ -1263,13 +1269,14 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     m_timer_visualization.reset();
     m_timer_total.reset();
     m_timer_vertsetup.reset();
+    m_timer_loadlist.reset();
 
 
 
 
     m_timer_total.start();
 
-    
+    m_timer_loadlist.start();
 
     this->GetLoadList().clear();
     m_contact_forces.clear();
@@ -1288,10 +1295,15 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
         UpdateFixedPatch();
     }
 
-   
+    
+    m_timer_loadlist.stop();
+
+   m_timer_vertsetup.start();
 
     // Update Active SubMesh indexes
     std::vector<ChSubGridMeshConnected> subMesh= m_grid_shape->getSubGridData();
+     m_timer_vertsetup.stop();
+
 
     std::vector<double> x_cut = m_grid_shape->x_cut_Arr;
 
@@ -1301,7 +1313,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     active_sub_mesh.clear();
     
     //std::cout<<"active_sub_mesh_length: "<<active_sub_mesh.size()<<std::endl;
-    active_sub_mesh = FindActiveSubMeshIdx(x_cut, y_cut, subMesh, m_patches);
+    active_sub_mesh = FindActiveSubMeshIdx(x_cut, y_cut, m_patches);
     
     //std::cout<<"active_sub_mesh_length after: "<<active_sub_mesh.size()<<std::endl;
     
@@ -1311,7 +1323,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     vertices.clear();
     //std::cout<<"vertices size before add: "<<vertices.size()<<std::endl;
     int neigh_size_ind = 0;
-    m_timer_vertsetup.start();
+    
     std::vector<std::vector<int>> vertices_connection;
     for(int i = 0; i < active_sub_mesh.size(); i++){
         std::vector<ChVector<>> sub_vertices = subMesh[active_sub_mesh[i]].getAllVertices_vec(); 
@@ -1332,18 +1344,19 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     std::cout<<"vertices size: "<<vertices.size()<<std::endl;
 
-    m_timer_vertsetup.stop();
-
-
+    
+   
     m_timer_calc_areas.start();
     SetupAuxData();
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = area_x*area_y*10*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = area_x*area_y*12*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();
+
+    m_timer_ray_casting.start();
 
     // Confirm how to structure this ?????
     // If from mesh use normal provided by mesh ???????
@@ -1356,7 +1369,7 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     // - initialize patch id to -1 (not set)
 
 
-    m_timer_ray_casting.start();
+    
 
     struct HitRecord {
         ChContactable* contactable;  // pointer to hit object
@@ -1858,19 +1871,48 @@ void SCMDeformableSoilGrid::UpdateFixedPatch(){
 }
 
 
-std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
+bool CheckIntRepeat(int a, std::vector<int> arr){
+    bool returnValue = false;
+    for(int i = 0; i<arr.size();i++){
+        if(a==arr[i]){
+            returnValue = true;
+            break;
+        }
+    }
+    return returnValue;
+}
+
+std::vector<int> SCMDeformableSoilGrid::FindActiveSubMeshIdx(std::vector<double> x_cut, 
                                     std::vector<double> y_cut, 
-                                    std::vector<ChSubGridMeshConnected> subMesh,
                                     std::vector<SCMDeformableSoilGrid::MovingPatchInfo> patches){
     std::vector<int> returnBuffer;
 
+    
+    for(int i = 0; i<patches.size();i++){
+
+
+        int x_cut_low = patches[i].m_min.x()/dx_findactive;
+        int x_cut_high = patches[i].m_max.x()/dx_findactive+1;
+        int y_cut_low = patches[i].m_min.y()/dy_findactive;
+        int y_cut_high = patches[i].m_max.y()/dy_findactive+1;
+
+        for(int a = x_cut_low; a<x_cut_high; a++){
+            for(int b = y_cut_low; b<y_cut_high; b++){
+                int temp = a*dside_findactive+b;
+                    if(CheckIntRepeat(temp, returnBuffer)==false){
+                        returnBuffer.push_back(temp);
+                    }
+                
+
+            }
+        }
+    }
 
 
 
 
 
-
-
+/*
     
     for(int i = 0; i<subMesh.size();i++){
         
@@ -1974,6 +2016,7 @@ std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut,
             }
         }
     }
+    */
     
 
     

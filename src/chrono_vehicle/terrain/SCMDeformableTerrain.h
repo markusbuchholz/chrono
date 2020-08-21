@@ -371,6 +371,11 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     // data structures for the mesh, aux. material data, etc.
     void SetupAuxData();
 
+
+    std::vector<int> FindActiveSubMeshIdx(std::vector<double> x_cut, 
+                                    std::vector<double> y_cut, 
+                                    std::vector<SCMDeformableSoilGrid::MovingPatchInfo> patches);
+
     std::shared_ptr<ChColorAsset> m_color;
     std::shared_ptr<ChGridMeshConnected> m_grid_shape;
     double m_height;
@@ -439,7 +444,10 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
 
     //this is the parmeter for findActiveIdx
-    
+    double dx_findactive; //submesh x dim
+    double dy_findactive; //submesh y dim
+    double dside_findactive; //division per side
+    double tot_findactive; //total number of submeshes
 
 
 
@@ -465,6 +473,8 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     ChTimer<double> m_timer_visualization;
     ChTimer<double> m_timer_total;
     ChTimer<double> m_timer_vertsetup;
+    ChTimer<double> m_timer_loadlist;
+    
     
     size_t m_num_vertices;
     size_t m_num_faces;
