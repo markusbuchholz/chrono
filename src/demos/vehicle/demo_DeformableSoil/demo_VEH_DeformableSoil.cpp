@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     my_system.Add(mrigidbody);
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
-    mrigidbody->SetPos(tire_center + ChVector<>(3, 2, -15));
+    mrigidbody->SetPos(tire_center + ChVector<>(50, 50, -15));
     //mrigidbody->SetPos(tire_center + ChVector<>(0, 0, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
@@ -161,12 +161,12 @@ int main(int argc, char* argv[]) {
     // Initialize the geometry of the soil
     
     // Use either a regular grid:
-    double length = 40;
-    double width = 16;
+    double length = 100;
+    double width = 60;
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length,5,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
+        mterrain.Initialize(0.2, width, length, div_width, div_length,15,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
         // Turn on the automatic level of detail refinement, so a coarse terrain mesh
         // is automatically improved by adding more points under the wheel contact patch:
         mterrain.SetAutomaticRefinement(true);
@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
         int div_length = (int)std::ceil(length / min_mesh_resolution);
         int div_width = (int)std::ceil(width / min_mesh_resolution);
         //mterrain.Initialize(0.2, width, length, div_width, div_length,10,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
-        mterrain.Initialize(0.2, width, length, div_width, div_length,5,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
+        mterrain.Initialize(0.2, width, length, div_width, div_length,20,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
     }
     
     // Or use a height map:

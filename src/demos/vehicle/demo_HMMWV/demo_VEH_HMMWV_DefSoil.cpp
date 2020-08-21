@@ -56,12 +56,12 @@ using std::endl;
 
 // Dimensions
 double terrainHeight = 0;
-double terrainLength = 20.0;  // size in X direction
-double terrainWidth = 20.0;    // size in Y direction
+double terrainLength = 16.0;  // size in X direction
+double terrainWidth = 8.0;    // size in Y direction
 
 // Divisions (X and Y)
-int divLength = 200;
-int divWidth = 200;
+int divLength = 150;
+int divWidth = 150;
 
 // -----------------------------------------------------------------------------
 // Vehicle parameters
@@ -81,7 +81,7 @@ DrivelineType drive_type = DrivelineType::AWD;
 VisualizationType chassis_vis = VisualizationType::NONE;
 
 // Initial vehicle position and orientation
-ChVector<> initLoc(10, 10, 0.3);
+ChVector<> initLoc(5, 2, 0.3);
 ChQuaternion<> initRot(1, 0, 0, 0);
 
 // Contact material properties
@@ -97,7 +97,7 @@ float mu_t = 0.8f;
 double step_size = 1e-3;
 
 // Time interval between two render frames (1/FPS)
-double render_step_size = 1.0 / 100;
+double render_step_size = 1.0 / 50;
 
 // Point on chassis tracked by the camera
 ChVector<> trackPoint(0.0, 0.0, 1.75);
@@ -128,14 +128,14 @@ class MyDriver : public ChDriver {
             return;
 
         if (eff_time > 0)
-            m_throttle = 0.95;
+            m_throttle = 0.99;
         else
-            m_throttle = 0.95;
+            m_throttle = 3.5 * eff_time;
 
         if (eff_time < 2)
             m_steering = 0;
         else
-            m_steering = 0.6 * std::sin(CH_C_2PI * (eff_time - 2) / 6);
+            m_steering = 0;
     }
 
   private:
@@ -232,13 +232,13 @@ int main(int argc, char* argv[]) {
     // ------------------
 
     SCMDeformableTerrain terrain(system);
-    terrain.SetSoilParameters(2e6,   // Bekker Kphi
+    terrain.SetSoilParameters(5e6,   // Bekker Kphi
                                 0,     // Bekker Kc
                                 1.1,   // Bekker n exponent
                                 0,     // Mohr cohesive limit (Pa)
                                 30,    // Mohr friction limit (degrees)
                                 0.01,  // Janosi shear coefficient (m)
-                                2e8,   // Elastic stiffness (Pa/m), before plastic yield
+                                5e8,   // Elastic stiffness (Pa/m), before plastic yield
                                 3e4    // Damping (Pa s/m), proportional to negative vertical speed (optional)
     );
 
@@ -266,7 +266,7 @@ int main(int argc, char* argv[]) {
     ////terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE_YELD, 0, 30000.2);
     terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.1);
 
-    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,5,ChCoordsys<>());
+    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,30,ChCoordsys<>());
 
     
     // ---------------------------------------

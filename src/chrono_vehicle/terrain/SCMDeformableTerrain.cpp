@@ -1301,8 +1301,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
    m_timer_vertsetup.start();
 
     // Update Active SubMesh indexes
-    std::vector<ChSubGridMeshConnected> subMesh= m_grid_shape->getSubGridData();
-     m_timer_vertsetup.stop();
+    std::vector<ChSubGridMeshConnected>* subMesh= m_grid_shape->getSubArrAddress();
+    m_timer_vertsetup.stop();
 
 
     std::vector<double> x_cut = m_grid_shape->x_cut_Arr;
@@ -1326,13 +1326,13 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
     
     std::vector<std::vector<int>> vertices_connection;
     for(int i = 0; i < active_sub_mesh.size(); i++){
-        std::vector<ChVector<>> sub_vertices = subMesh[active_sub_mesh[i]].getAllVertices_vec(); 
-        std::cout<<"partition: "<<active_sub_mesh[i]<<" size: "<<sub_vertices.size()<<std::endl;
+        std::vector<ChVector<>> sub_vertices = subMesh->at(active_sub_mesh[i]).getAllVertices_vec(); 
+        //std::cout<<"partition: "<<active_sub_mesh[i]<<" size: "<<sub_vertices.size()<<std::endl;
         vertices.insert(vertices.end(),sub_vertices.begin(),sub_vertices.end());
 
         activeSubMesh_size_buffer.push_back(vertices.size()-1); //push the index cut point of that array
     
-        std::vector<std::vector<int>> neighbour_buffer = subMesh[active_sub_mesh[i]].getAllNeigh_vec();
+        std::vector<std::vector<int>> neighbour_buffer = subMesh->at(active_sub_mesh[i]).getAllNeigh_vec();
         for(int a = 0; a<neighbour_buffer.size();a++){
             for(int b = 0; b<neighbour_buffer[a].size();b++){
                 neighbour_buffer[a][b] = neighbour_buffer[a][b]+neigh_size_ind;
@@ -1351,7 +1351,8 @@ void SCMDeformableSoilGrid::ComputeInternalForces(){
 
     for (int i = 0; i < vertices.size(); i++) {
         p_level_initial[i] = (vertices[i]).z();
-        p_area[i] = area_x*area_y*12*(m_height - p_level_initial[i]+1)*(m_height - p_level_initial[i]+1); //need an api to get uniform area???????
+        p_area[i] = area_x*area_y*12*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)
+        *(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0)*(m_height - p_level_initial[i]+1.0); //need an api to get uniform area???????
     }
 
     m_timer_calc_areas.stop();

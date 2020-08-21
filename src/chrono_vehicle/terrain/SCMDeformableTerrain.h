@@ -159,6 +159,10 @@ class ChGridMeshConnected{
 
     void UpdateColor(ChVector<float> new_color,int idx ,int submesh_idx);
 
+    std::vector<ChSubGridMeshConnected>* getSubArrAddress(){
+      return &subArr;
+    }
+
 
     //------------------------
     void InitializeSubNeighMap();
