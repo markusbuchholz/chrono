@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
     ////terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.15);
     terrain.AddMovingPatch(vehicle.GetChassisBody(), ChVector<>(0, 0, 0), 10, 6);
 
-    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,5,ChCoordsys<>());
+    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,ChCoordsys<>());
 
     AddFixedObstacles(vehicle.GetSystem());
     ////AddMovingObstacles(vehicle.GetSystem());

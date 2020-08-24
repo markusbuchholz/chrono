@@ -35,8 +35,8 @@ using namespace chrono::vehicle::hmmwv;
 
 // =============================================================================
 
-double size = 50.0;
-int num_div = 1000;
+double size = 100.0;
+int num_div = 2000;
 
 // =============================================================================
 
@@ -104,7 +104,7 @@ HmmwvScmTest<EnumClass, TIRE_MODEL>::HmmwvScmTest() : m_step(2e-3) {
     m_hmmwv = new HMMWV_Full();
     m_hmmwv->SetContactMethod(ChContactMethod::SMC);
     m_hmmwv->SetChassisFixed(false);
-    m_hmmwv->SetInitPosition(ChCoordsys<>(ChVector<>(5.0 - size / 2, 5.0 - size / 2, 0.7), Q_from_AngZ(CH_C_PI / 4)));
+    m_hmmwv->SetInitPosition(ChCoordsys<>(ChVector<>(5.0 + size / 2, 5.0 + size / 2, 0.7), Q_from_AngZ(CH_C_PI / 4)));
     m_hmmwv->SetPowertrainType(powertrain_model);
     m_hmmwv->SetDriveType(drive_type);
     m_hmmwv->SetTireType(TIRE_MODEL);

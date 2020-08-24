@@ -60,8 +60,8 @@ double terrainLength = 16.0;  // size in X direction
 double terrainWidth = 8.0;    // size in Y direction
 
 // Divisions (X and Y)
-int divLength = 150;
-int divWidth = 150;
+int divLength = 400;
+int divWidth = 200;
 
 // -----------------------------------------------------------------------------
 // Vehicle parameters
@@ -266,7 +266,7 @@ int main(int argc, char* argv[]) {
     ////terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE_YELD, 0, 30000.2);
     terrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.1);
 
-    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,30,ChCoordsys<>());
+    terrain.Initialize(terrainHeight, terrainLength, terrainWidth, divLength, divWidth,ChCoordsys<>());
 
     
     // ---------------------------------------

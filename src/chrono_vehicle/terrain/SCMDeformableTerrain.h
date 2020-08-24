@@ -1,3 +1,21 @@
+// =============================================================================
+// PROJECT CHRONO - http://projectchrono.org
+//
+// Copyright (c) 2014 projectchrono.org
+// All rights reserved.
+//
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file at the top level of the distribution and at
+// http://projectchrono.org/license-chrono.txt.
+//
+// =============================================================================
+// Authors: Jason Z
+// =============================================================================
+//
+// SCM terrain quadmesh method
+//
+// =============================================================================
+
 #ifndef SCM_DEFORMABLE_GRID_TERRAIN_H
 #define SCM_DEFORMABLE_GRID_TERRAIN_H
 
@@ -82,7 +100,7 @@ class ChGridElement{
 // sub mesh class
 class ChSubGridMeshConnected{
   private:
-    std::vector<ChGridElement> eleArr;
+    std::vector<ChGridElement*> eleArr;
     std::vector<ChVector<double>> eleCenter;
 
     //std::vector<std::vector<int>> eleConnectedIdx;
@@ -100,23 +118,21 @@ class ChSubGridMeshConnected{
 
 
   public:
-    void addGridElement(ChGridElement);
+    void addGridElement(ChGridElement*);
     void removeGridElement(int index);
     bool checkDataInteg();
     int getEleSize(){return eleArr.size();}
     int getCenterSize(){return eleCenter.size();}
-    std::vector<ChGridElement> getEleArr(){return eleArr;}
-    std::vector<ChVector<double>> getAllVertices();
+    std::vector<ChGridElement*> getEleArr(){return eleArr;}
     void getBoundingInfo();
     void Update(ChVector<double> new_vec, int idx);
-    void Refine(ChVector<double> target_vertex);
+    //void Refine(ChVector<double> target_vertex);
     std::vector<ChVector<>> returnMeshVert();
     std::vector<ChVector<int>> returnMeshFace();
     void GetSubVisMesh(ChCoordsys<> plane);
 
     void UpdateColor(ChVector<float> new_color, int idx);
 
-//--------------------------------------------------------
     void InitVerNeighMap();
     void InitAllVertices();
     void InitVerColor();
@@ -125,6 +141,9 @@ class ChSubGridMeshConnected{
     std::vector<ChVector<double>> getAllVertices_vec();
     std::vector<ChVector<int>> getAllFaces();
     std::vector<ChVector<>> getAllColors_vec();
+
+    std::vector<ChVector<>> GetMeshVertices(){return mesh_vertices;}
+    
     
 
     double xmax;
@@ -145,15 +164,14 @@ class ChGridMeshConnected{
     std::vector<ChSubGridMeshConnected> subArr;
 
   public:
-    void initializeData(std::vector<ChGridElement> gird_ele, int sub_on_side);
+    void initializeData(std::vector<ChGridElement>* gird_ele, int sub_on_side);
     std::vector<ChSubGridMeshConnected> getSubGridData();
-    std::vector<ChVector<double>> getAllVertices();
     void getBoundingInfo();
     void addSubGridData(ChSubGridMeshConnected subMesh);
     //std::shared_ptr<ChTriangleMeshShape> 
     void GetVisMesh(std::shared_ptr<ChTriangleMeshShape> trimesh,ChCoordsys<> plane, std::vector<int> active_sub_mesh,std::vector<int> vis_index);
     void Update(ChVector<double> new_vec,int idx ,int submesh_idx);
-    void Refine(ChVector<double> target_vertex, int submesh_idx);
+    //void Refine(ChVector<double> target_vertex, int submesh_idx);
     void InitializeMeshVis(ChCoordsys<> plane);
 
 
@@ -163,13 +181,9 @@ class ChGridMeshConnected{
       return &subArr;
     }
 
-
-    //------------------------
     void InitializeSubNeighMap();
     void InitSubAllVertices();
     void InitSubAllColors();
-    
-
 
     double xmin;
     double xmax;
@@ -178,11 +192,8 @@ class ChGridMeshConnected{
     double zmin;
     double zmax;
     
-
     std::vector<double> x_cut_Arr;
     std::vector<double> y_cut_Arr;
-
-
 
 };
 
@@ -242,7 +253,7 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
 
       ~SCMDeformableTerrain(){}
 
-      void Initialize(double height, double sizeX, double sizeZ, int divX, int divZ, int sub_per_side=2, ChCoordsys<> plane=ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
+      void Initialize(double height, double sizeX, double sizeY, int divX, int divY, ChCoordsys<> plane=ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
 
       void Initialize(const std::string& mesh_file, int sub_per_side=2, ChCoordsys<> plane=ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
 
@@ -284,8 +295,8 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
                                              double dimX,
                                              double dimY);
 
-      int returnVerticesSize();
-      std::vector<ChVector<double>> returnVertices();
+      //int returnVerticesSize();
+      //std::vector<ChVector<double>> returnVertices();
 
       void PrintStepStatistics(std::ostream& os) const;
 
@@ -293,9 +304,6 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
       const std::shared_ptr<ChTriangleMeshShape> GetMesh() const;
 
       void SetColor(ChColor color);
-
-
-
 
     /// Class to be used as a callback interface for location-dependent soil parameters.
     /// A derived class must implement Set() and set **all** soil parameters (no defaults are provided).
@@ -318,8 +326,6 @@ class CH_VEHICLE_API SCMDeformableTerrain : public ChTerrain {
         double m_damping_R;      ///< vertical damping R, per unit area [Pa s/m] (proportional to vertical speed)
     };
       void RegisterSoilParametersCallback(std::shared_ptr<SoilParametersCallback> cb);
-
-
 };
 
 
@@ -390,6 +396,7 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     std::vector<int> active_sub_mesh;
 
     std::vector<ChVector<>> vertices;
+    std::vector<ChVector<>> mesh_vertices;
 
     std::vector<ChVector<>> p_vertices_initial;
     std::vector<ChVector<>> p_speeds;
@@ -426,12 +433,9 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
     double area_y;
 
     ChCoordsys<> plane;
-    //PatchType m_type;
 
-    // aux. topology data
-    //std::vector<std::set<int>> connected_vertexes;
     std::shared_ptr<ChTriangleMeshShape> m_trimesh_shape;
-    //std::vector<std::array<int, 4>> tri_map;
+
 
     bool do_bulldozing;
     double bulldozing_flow_factor;
@@ -447,22 +451,14 @@ class CH_VEHICLE_API SCMDeformableSoilGrid : public ChLoadContainer {
 
     double last_t;  // for optimization
 
-
-
-
     //this is the parmeter for findActiveIdx
     double dx_findactive; //submesh x dim
     double dy_findactive; //submesh y dim
     double dside_findactive; //division per side
     double tot_findactive; //total number of submeshes
 
-
-
     // this vector stores the index cut data for mesh visualization
     std::vector<int> vis_index;
-
-
-
 
     // Moving patch parameters
  

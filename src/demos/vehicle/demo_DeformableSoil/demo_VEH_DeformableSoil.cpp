@@ -36,8 +36,8 @@ const std::string out_dir = GetChronoOutputPath() + "SCM_DEF_SOIL";
 
 // Enable/disable adaptive mesh refinement
 bool enable_adaptive_refinement = true;
-double init_mesh_resolution = 0.2;
-double min_mesh_resolution = 0.08;
+double init_mesh_resolution = 0.1;
+double min_mesh_resolution = 0.1;
 
 // Enable/disable bulldozing effects
 bool enable_bulldozing = true;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     my_system.Add(mrigidbody);
     mrigidbody->SetMass(500);
     mrigidbody->SetInertiaXX(ChVector<>(20, 20, 20));
-    mrigidbody->SetPos(tire_center + ChVector<>(5, 0.3, -10));
+    mrigidbody->SetPos(tire_center + ChVector<>(2, 0.3, -3));
     //mrigidbody->SetPos(tire_center + ChVector<>(0, 0, 0));
 
     auto trimesh = chrono_types::make_shared<geometry::ChTriangleMeshConnected>();
@@ -161,12 +161,12 @@ int main(int argc, char* argv[]) {
     // Initialize the geometry of the soil
     
     // Use either a regular grid:
-    double length = 40;
-    double width = 16;
+    double length = 10;
+    double width = 10;
     if (enable_adaptive_refinement) {
         int div_length = (int)std::ceil(length / init_mesh_resolution);
         int div_width = (int)std::ceil(width / init_mesh_resolution);
-        mterrain.Initialize(0.2, width, length, div_width, div_length,15,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
+        mterrain.Initialize(0.2, width, length, div_width, div_length,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
         // Turn on the automatic level of detail refinement, so a coarse terrain mesh
         // is automatically improved by adding more points under the wheel contact patch:
         mterrain.SetAutomaticRefinement(true);
@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
         int div_length = (int)std::ceil(length / min_mesh_resolution);
         int div_width = (int)std::ceil(width / min_mesh_resolution);
         //mterrain.Initialize(0.2, width, length, div_width, div_length,10,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
-        mterrain.Initialize(0.2, width, length, div_width, div_length,20,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
+        mterrain.Initialize(0.2, width, length, div_width, div_length,ChCoordsys<>(ChVector<>(0, 0, 0), Q_from_AngX(-CH_C_PI_2)));
     }
     
     // Or use a height map:
@@ -221,14 +221,14 @@ int main(int argc, char* argv[]) {
     }
     // Optionally, enable moving patch feature (reduces number of ray casts)
     if (enable_moving_patch) {
-        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 2 * tire_rad, 2 * tire_rad);
+        mterrain.AddMovingPatch(mrigidbody, ChVector<>(0, 0, 0), 5 * tire_rad, 5 * tire_rad);
     }
 
 
         
     // Set some visualization parameters: either with a texture, or with falsecolor plot, etc.
     ////mterrain.SetTexture(vehicle::GetDataFile("terrain/textures/grass.jpg"), 16, 16);
-    mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE, 0, 900);
+    mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE, 0, 30000.2);
     //mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_PRESSURE_YELD, 0, 30000.2);
     //mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE, 0, 0.15);
     ////mterrain.SetPlotType(vehicle::SCMDeformableTerrain::PLOT_SINKAGE_PLASTIC, 0, 0.15);
@@ -285,7 +285,7 @@ int main(int argc, char* argv[]) {
         application.GetSceneManager()->getActiveCamera()->setTarget(core::vector3dfCH(mrigidbody->GetPos()));
         application.DrawAll();
         application.DoStep();
-        ChIrrTools::drawColorbar(0, 1500, "Pressure[Pa]", application.GetDevice(), 1180);
+        ChIrrTools::drawColorbar(0, 30000, "Pressure[Pa]", application.GetDevice(), 1180);
         application.EndScene();
         //mterrain.PrintStepStatistics();
         

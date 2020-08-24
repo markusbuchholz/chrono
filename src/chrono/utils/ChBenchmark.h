@@ -20,7 +20,7 @@
 #ifndef CH_BENCHMARK_H
 #define CH_BENCHMARK_H
 
-#include "chrono_thirdparty/googlebenchmark/include/benchmark/benchmark.h"
+#include "benchmark/benchmark.h"
 #include "chrono/physics/ChSystem.h"
 
 namespace chrono {
